@@ -114,6 +114,7 @@ class Stroke(object):
         self.coords = np.vstack([xcol,ycol])
         # keep the original data so we're to modify self.coords
         self.raw_coords = coords
+        self.coords = np.vstack([xcol,ycol]).T
 
     def __unicode__(self):
         return "<Stroke (id=%s)>" % self.id
@@ -122,12 +123,11 @@ class Stroke(object):
         return self.__unicode__()
 
     def render(self, offset=0):
-        pairs = self.coords.swapaxes(0, 1).tolist()
+        pairs = self.coords.T.tolist()
         out = ''
 
         for pair in pairs:
-            pair[0] += offset
-            out += " ".join(map(lambda x: str(x), pair)) + ", "
+            out += "%s %s, " % (str(pair[0]+offset), str(pair[1]))
         out = out.strip().rstrip(",")
         return '<trace id="%s">%s</trace>' % (self.id, out)
 
@@ -146,8 +146,8 @@ class Stroke(object):
             return
 
         # remove duplicates
-        pairs = self.coords.swapaxes(0, 1).tolist()
-        last = pairs[0] 
+        pairs = self.coords.tolist()
+        last = pairs[0]
         unique_coords = [last]
         for coord in pairs[1:]:
             if last == coord:
