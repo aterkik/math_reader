@@ -1,4 +1,5 @@
 import xml.etree.ElementTree as ET
+import numpy as np
 
 class inkML(object):
     def __init__(self, fname):
@@ -32,7 +33,7 @@ class inkML(object):
             # TODO: inefficent loop!
             for trace in traces:
                 if trace.attrib['id'] in trids:
-                    stroke = Stroke(trace.text.strip().split(','), trace.attrib['id'])
+                    stroke = Stroke(trace.text.strip().replace(",","").split(' '), trace.attrib['id'])
                     grp.append(stroke)
             stroke_partition.append(grp)
         return stroke_partition
@@ -41,8 +42,9 @@ class inkML(object):
 class Stroke(object):
     def __init__(self, coords, id):
         self.id = id
-        self.coords = coords
-
+        xcol = np.array([np.array(coords[0::2]).astype(np.float)])
+        ycol = np.array([np.array(coords[1::2]).astype(np.float)])
+        self.coords = np.vstack([xcol,ycol])
 
     def __unicode__(self):
         return "<Stroke (id=%s)>" % self.id
@@ -50,7 +52,8 @@ class Stroke(object):
     def __repr__(self):
         return self.__unicode__()
 
-        
+
+
 if __name__ == '__main__':
     def main():
         import sys
