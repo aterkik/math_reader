@@ -93,6 +93,13 @@ class StrokeGroup(object):
         wh_ratio = (xmax - xmin) / (ymax - ymin)
         for strk in self.strokes:
             strk.scale_size(xmin, ymin, xmax-xmin, ymax-ymin, wh_ratio, yhigh=100)
+        self.get_features()
+
+    def get_features(self):
+        print self.strokes[0]._norm_line_length()
+        print self.strokes[0]._angle_feature()
+
+
 
     def __unicode__(self):
         return self.strokes
@@ -111,10 +118,29 @@ class Stroke(object):
         self.id = id
         xcol = np.array([np.array(coords[0::2]).astype(np.float)])
         ycol = np.array([np.array(coords[1::2]).astype(np.float)])
-        self.coords = np.vstack([xcol,ycol])
         # keep the original data so we're to modify self.coords
         self.raw_coords = coords
         self.coords = np.vstack([xcol,ycol]).T
+
+    def _norm_line_length(self):
+        dists = []
+        p1 = self.coords.T[0]
+        total = 0
+        for p2 in self.coords.T[1:]:
+            dist = np.linalg.norm(p2-p1)
+            dists.append(dist)
+            total += dist
+            p1 = p2
+        return np.array(dists)
+
+    def _angle_feature(self):
+        angles = []
+        p1 = self.coords.T[0]
+        for p2 in self.coords.T[1:]:
+            a = angle(p2,p1)
+            angles.append(a)
+        return np.array(angles)
+
 
     def __unicode__(self):
         return "<Stroke (id=%s)>" % self.id
@@ -175,7 +201,11 @@ class InkMLWriter(object):
         annot = content.split("</annotationXML>")[0] + "</annotationXML>"
         return annot
 
-        
+def length(v):
+    return np.sqrt(np.dot(v, v))
+
+def angle(v1,v2):
+    return np.arccos(np.dot(v1, v2) / (length(v1) * length(v2)))
 
 if __name__ == '__main__':
     def main():
