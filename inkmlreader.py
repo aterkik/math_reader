@@ -1,4 +1,5 @@
 import xml.etree.ElementTree as ET
+import numpy as np
 
 class inkML(object):
     def __init__(self, fname):
@@ -31,7 +32,7 @@ class inkML(object):
             # TODO: inefficent loop!
             for trace in traces:
                 if trace.attrib['id'] in trids:
-                    stroke = Stroke(trace.text.strip().split(','), trace.attrib['id'])
+                    stroke = Stroke(trace.text.strip().replace(",","").split(' '), trace.attrib['id'])
                     grp.append(stroke)
             stroke_partition.append(StrokeGroup(grp))
         return (root, stroke_partition)
@@ -56,7 +57,9 @@ class StrokeGroup(object):
 class Stroke(object):
     def __init__(self, coords, id):
         self.id = id
-        self.coords = coords
+        xcol = np.array([np.array(coords[0::2]).astype(np.float)])
+        ycol = np.array([np.array(coords[1::2]).astype(np.float)])
+        self.coords = np.vstack([xcol,ycol])
 
     def __unicode__(self):
         return "<Stroke (id=%s)>" % self.id
@@ -65,7 +68,12 @@ class Stroke(object):
         return self.__unicode__()
 
     def render(self):
-        return '<trace id="%s">%s</trace>' % (self.id, " ".join(self.coords))
+        pairs = self.coords.swapaxes(0, 1).tolist()
+        out = ''
+        for pair in pairs:
+            out += " ".join(map(lambda x: str(x), pair)) + ", "
+        out = out.strip().rstrip(",")
+        return '<trace id="%s">%s</trace>' % (self.id, out)
 
     def clean(self):
         """Does duplicate filtering & stroke smoothing"""
@@ -74,9 +82,10 @@ class Stroke(object):
             return
 
         # remove duplicates
-        last = self.coords[0]
+        pairs = self.coords.swapaxes(0, 1).tolist()
+        last = pairs[0] 
         unique_coords = [last]
-        for coord in self.coords[1:]:
+        for coord in pairs[1:]:
             if last == coord:
                 continue
             unique_coords.append(coord)
@@ -91,7 +100,7 @@ class InkMLWriter(object):
     def write(self):
         out = self.annot + "\n"
         out += "\n".join([strk_grp.render() for strk_grp in self.stroke_groups])
-        out += "</ink>"
+        out += "\n</ink>"
         return out
 
 
@@ -99,6 +108,7 @@ def _extract_annotations(content):
     annot = content.split("</annotationXML>")[0] + "</annotationXML>"
     return annot
         
+
 
 if __name__ == '__main__':
     def main():
@@ -110,7 +120,7 @@ if __name__ == '__main__':
 
         annot = _extract_annotations(open(fname).read())
         writer = InkMLWriter(annot, inkml.stroke_groups)
-        writer.write()
+        print(writer.write())
 
 
     main()
