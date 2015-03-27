@@ -76,7 +76,7 @@ class Stroke(object):
         self.id = id
         xcol = np.array([np.array(coords[0::2]).astype(np.float)])
         ycol = np.array([np.array(coords[1::2]).astype(np.float)])
-        self.coords = np.vstack([xcol,ycol])
+        self.coords = np.vstack([xcol,ycol]).T
 
     def __unicode__(self):
         return "<Stroke (id=%s)>" % self.id
@@ -85,7 +85,7 @@ class Stroke(object):
         return self.__unicode__()
 
     def render(self):
-        pairs = self.coords.swapaxes(0, 1).tolist()
+        pairs = self.coords.tolist()
         out = ''
         for pair in pairs:
             out += " ".join(map(lambda x: str(x), pair)) + ", "
@@ -99,8 +99,8 @@ class Stroke(object):
             return
 
         # remove duplicates
-        pairs = self.coords.swapaxes(0, 1).tolist()
-        last = pairs[0] 
+        pairs = self.coords.tolist()
+        last = pairs[0]
         unique_coords = [last]
         for coord in pairs[1:]:
             if last == coord:
@@ -124,7 +124,7 @@ class InkMLWriter(object):
 def _extract_annotations(content):
     annot = content.split("</annotationXML>")[0] + "</annotationXML>"
     return annot
-        
+
 
 
 if __name__ == '__main__':
