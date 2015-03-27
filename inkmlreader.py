@@ -1,6 +1,23 @@
 import xml.etree.ElementTree as ET
 import numpy as np
 
+"""Scales an array (by column)"""
+def scale(rawpoints, high=100.0, low=0.0):
+    mins = np.min(rawpoints, axis=0)
+    maxs = np.max(rawpoints, axis=0)
+    rng = maxs - mins
+    return high - (((high - low) * (maxs - rawpoints)) / rng)
+
+"""Rounds to nearest interval/step"""
+def round_nearest(data,step=1):
+    ndata = (data % step)
+    for i,d in enumerate(ndata):
+        if d > step/2:
+            data[i] = data[i] + (step - d)
+        if d < step/2:
+            data[i] = data[i] - d
+    return data
+
 class inkML(object):
     def __init__(self, fname):
         try:
