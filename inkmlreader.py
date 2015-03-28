@@ -57,7 +57,6 @@ class inkML(object):
 
         stroke_partition = []
         traces = root.findall(np + 'trace')
-        # trace.text, trace.atrrib['id']
         tracegrps = root.findall('%straceGroup/%straceGroup' % (np, np))
 
         for trgrp in tracegrps:
@@ -79,7 +78,6 @@ class StrokeGroup(object):
         self.strokes = strokes
 
     def preprocess(self):
-        # wh_ratio: width/height ratio
         for stroke in self.strokes:
             stroke.clean()
 
@@ -96,8 +94,8 @@ class StrokeGroup(object):
         self.get_features()
 
     def get_features(self):
-        print self.strokes[0]._norm_line_length()
-        print self.strokes[0]._angle_feature()
+        print(self.strokes[0]._norm_line_length())
+        print(self.strokes[0]._angle_feature())
 
 
 
@@ -108,7 +106,7 @@ class StrokeGroup(object):
         """
             offset: Offset value to add on each X trace coordinate. Useful
                     for visualizations so that symbols appear left to right
-                    instead of in on top of each other.
+                    instead of on top of each other.
         """
         out = "\n".join([strk.render(offset=offset) for strk in self.strokes])
         return out
@@ -118,7 +116,6 @@ class Stroke(object):
         self.id = id
         xcol = np.array([np.array(coords[0::2]).astype(np.float)])
         ycol = np.array([np.array(coords[1::2]).astype(np.float)])
-        # keep the original data so we're to modify self.coords
         self.raw_coords = coords
         self.coords = np.vstack([xcol,ycol]).T
 
@@ -161,7 +158,7 @@ class Stroke(object):
         xcol = self.coords[:,0]
         ycol = self.coords[:,1]
 
-        # y prime column
+        # y prime and x prime columns
         yp_col = (ycol - ymin) * (float(yhigh) / yrng)
         xp_col = (xcol - xmin) * (float(wh_ratio * yhigh) / xrng)
         self.coords = np.vstack([xp_col, yp_col])
@@ -171,7 +168,7 @@ class Stroke(object):
         if len(self.coords) < 1:
             return
 
-        # remove duplicates
+        # Remove duplicates
         pairs = self.coords.tolist()
         last = pairs[0]
         unique_coords = [last]
