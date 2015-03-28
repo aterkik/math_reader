@@ -45,6 +45,7 @@ class inkML(object):
         # E.g. in [[stroke1, stroke2], [stroke3] ...] stroke1 & stroke2 make
         # one symbol and stroke3 is makes a different symbol
         self.root, self.stroke_groups = self._parse_inkml(fd.read())
+        self.stroke_groups = sorted(self.stroke_groups, key=lambda grp: grp.strokes[0].id)
 
     def preprocess(self):
         for strk_grp in self.stroke_groups:
@@ -76,6 +77,8 @@ class inkML(object):
 class StrokeGroup(object):
     def __init__(self, strokes):
         self.strokes = strokes
+        # Sort strokes by id which corresponds to the order at which they were written
+        self.strokes = sorted(self.strokes, key=lambda strk: strk.id)
 
     def preprocess(self):
         for stroke in self.strokes:
@@ -100,7 +103,10 @@ class StrokeGroup(object):
 
 
     def __unicode__(self):
-        return self.strokes
+        return "<StrokeGroup %s>" % str(self.strokes)
+
+    def __repr__(self):
+        return self.__unicode__()
 
     def render(self, offset=0):
         """
@@ -113,7 +119,7 @@ class StrokeGroup(object):
 
 class Stroke(object):
     def __init__(self, coords, id):
-        self.id = id
+        self.id = int(id)
         xcol = np.array([np.array(coords[0::2]).astype(np.float)])
         ycol = np.array([np.array(coords[1::2]).astype(np.float)])
         self.raw_coords = coords
