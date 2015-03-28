@@ -171,14 +171,24 @@ class Stroke(object):
         # Remove duplicates
         pairs = self.coords.tolist()
         last = pairs[0]
-        unique_coords = [last]
+        uniques = [last]
         for coord in pairs[1:]:
             if last == coord:
                 continue
-            unique_coords.append(coord)
+            uniques.append(coord)
             last = coord
 
-        self.coords = np.array(unique_coords)
+        # Do coordinate smoothing
+        # Works by replacing every point by the average of the previous,
+        # current and next point (except for the first and last point)
+        last_idx = len(uniques) - 1
+        for i, pair in enumerate(uniques):
+            if i in (0, last_idx,):
+                continue
+            pair[0] = (uniques[i-1][0]+uniques[i][0]+uniques[i+1][0]) / 3.0
+            pair[1] = (uniques[i-1][1]+uniques[i][1]+uniques[i+1][1]) / 3.0
+
+        self.coords = np.array(uniques)
 
 
 class InkMLWriter(object):
