@@ -51,6 +51,7 @@ class inkML(object):
         for strk_grp in self.stroke_groups:
             strk_grp.preprocess()
 
+
     @staticmethod
     def _parse_inkml(inkml_data):
         root = ET.fromstring(inkml_data)
@@ -63,6 +64,7 @@ class inkML(object):
         for trgrp in tracegrps:
             trids = map(lambda trv: trv.attrib['traceDataRef'], trgrp.findall(np + 'traceView'))
             trids = list(trids)
+            ground_truth = trgrp.find(np + 'annotation').text
 
             grp = []
             # TODO: inefficent loop!
@@ -70,15 +72,16 @@ class inkML(object):
                 if trace.attrib['id'] in trids:
                     stroke = Stroke(trace.text.strip().replace(",","").split(' '), trace.attrib['id'])
                     grp.append(stroke)
-            stroke_partition.append(StrokeGroup(grp))
+            stroke_partition.append(StrokeGroup(grp, ground_truth))
         return (root, stroke_partition)
 
 
 class StrokeGroup(object):
-    def __init__(self, strokes):
+    def __init__(self, strokes, target):
         self.strokes = strokes
         # Sort strokes by id which corresponds to the order at which they were written
         self.strokes = sorted(self.strokes, key=lambda strk: strk.id)
+        self.target = target
 
     def preprocess(self):
         for stroke in self.strokes:
@@ -91,14 +94,15 @@ class StrokeGroup(object):
                             for stroke in self.strokes], axis=0)
 
         # Do size normalization
-        wh_ratio = (xmax - xmin) / (ymax - ymin)
+        ydiff = ymax - ymin
+        wh_ratio = (xmax-xmin)/ydiff if ydiff != 0 else xmax-xmin
         for strk in self.strokes:
             strk.scale_size(xmin, ymin, xmax-xmin, ymax-ymin, wh_ratio, yhigh=100)
-        self.get_features()
+        #self.get_features()
 
     def get_features(self):
-        print(self.strokes[0]._norm_line_length())
-        print(self.strokes[0]._angle_feature())
+        return [self.strokes[0]._norm_line_length(),
+                self.strokes[0]._angle_feature()]
 
 
 
@@ -165,8 +169,16 @@ class Stroke(object):
         ycol = self.coords[:,1]
 
         # y prime and x prime columns
-        yp_col = (ycol - ymin) * (float(yhigh) / yrng)
-        xp_col = (xcol - xmin) * (float(wh_ratio * yhigh) / xrng)
+        if yrng != 0:
+            yp_col = (ycol-ymin)*(float(yhigh)/yrng)
+        else:
+            yp_col = (ycol-ymin)*(float(yhigh)/(yrng+1))
+
+        if xrng != 0:
+            xp_col = (xcol-xmin)*(float(wh_ratio*yhigh)/xrng)
+        else:
+            xp_col = (xcol-xmin)*(float(wh_ratio*yhigh)/(xrng+1))
+
         self.coords = np.vstack([xp_col, yp_col])
 
     def clean(self):
