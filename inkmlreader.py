@@ -1,5 +1,7 @@
 import xml.etree.ElementTree as ET
 import numpy as np
+import matplotlib.pyplot as plt
+from utils import Line, get_line_crossing, generate_subcrossings
 
 """
     Usage:
@@ -82,32 +84,54 @@ class StrokeGroup(object):
         # Sort strokes by id which corresponds to the order at which they were written
         self.strokes = sorted(self.strokes, key=lambda strk: strk.id)
         self.target = target
+        # Flag to tell whether symbol is preprocessed
+        self._is_preprocessed = False
+        self.xmin, self.xmax = None, None
+        self.ymin, self.ymax = None, None
+
+    def get_coords(self):
+        all_coords = []
+        for stroke in self.strokes:
+            all_coords.extend(stroke.coords.T.tolist())
+
+        return np.array(all_coords)
 
     def preprocess(self):
         for stroke in self.strokes:
             stroke.clean()
 
+
         # It's best to do size normaliztion after cleaning
-        [xmin, ymin] = np.min([stroke.coords.min(axis=0)
+        [self.xmin, self.ymin] = np.min([stroke.coords.min(axis=0)
                                for stroke in self.strokes], axis=0)
-        [xmax, ymax] = np.max([stroke.coords.max(axis=0)
+        [self.xmax, self.ymax] = np.max([stroke.coords.max(axis=0)
                             for stroke in self.strokes], axis=0)
 
         # Do size normalization
-        ydiff = ymax - ymin
-        wh_ratio = (xmax-xmin)/ydiff if ydiff != 0 else xmax-xmin
+        ydiff = self.ymax - self.ymin
+        wh_ratio = (self.xmax-self.xmin)/ydiff if ydiff != 0 else self.xmax-self.xmin
         for strk in self.strokes:
-            strk.scale_size(xmin, ymin, xmax-xmin, ymax-ymin, wh_ratio, yhigh=100)
+            strk.scale_size(self.xmin, self.ymin, self.xmax-self.xmin,
+                    self.ymax-self.ymin, wh_ratio, yhigh=100)
+
+
+        # Recalculate min & maxes after scaling
+        [self.xmin, self.ymin] = np.min([stroke.coords.T.min(axis=0)
+                               for stroke in self.strokes], axis=0)
+        [self.xmax, self.ymax] = np.max([stroke.coords.T.max(axis=0)
+                            for stroke in self.strokes], axis=0)
+
+        self._is_preprocessed = True
         #self.get_features()
 
     def get_features(self):
-        return [self.strokes[0]._norm_line_length(),
-                self.strokes[0]._angle_feature()]
-
-
+        #TODO: append line length & angle features
+        #return [self.strokes[0]._norm_line_length(),
+        #        self.strokes[0]._angle_feature()]
+        return self.get_crossings_features()
 
     def __unicode__(self):
-        return "<StrokeGroup %s>" % str(self.strokes)
+        return "<StrokeGroup '%s' %s>" % (str(self.target), str(self.strokes))
 
     def __repr__(self):
         return self.__unicode__()
@@ -121,13 +145,65 @@ class StrokeGroup(object):
         out = "\n".join([strk.render(offset=offset) for strk in self.strokes])
         return out
 
+    def get_crossings_features(self):
+        if not self._is_preprocessed:
+            print("!!! Warning: computing features before preprocessing.")
+
+        horiz = self._crossing_features(direction='horiz')
+        vert = self._crossing_features(direction='vert')
+
+        horiz = np.array(horiz).flatten().tolist()
+        vert = np.array(vert).flatten().tolist()
+
+        if len(horiz) < 15:
+            horiz.extend([0.0] * (15-len(horiz)))
+        if len(vert) < 15:
+            vert.extend([0.0] * (15-len(vert)))
+
+        return np.array([horiz, vert]).flatten().tolist()
+
+    def plot(self):
+        for strk in self.strokes:
+            plt.scatter(strk.coords[:,0], strk.coords[:,1])
+
+        plt.show()
+
+    def _crossing_features(self, direction='vert'):
+        nlines = 9.0
+        features = []
+        if direction == 'vert':
+            start, end = self.xmin, self.xmax
+        else:
+            start, end = self.ymin, self.ymax
+
+        # Create 5 regions
+        step = (end-start)/nlines
+
+        # Generates 9 lines for each region.
+        # So subcrossings is a list of 5 lists with 9 lines each
+        subcrossings = [generate_subcrossings(start, start+(step*i),
+                            nlines, direction=direction) for i in range(1, 6)]
+
+        crossings = []
+        for subcrossing in subcrossings:
+            crossings = []
+            for line in subcrossing:
+                crossings.append(get_line_crossing(line, self))
+
+            features.append(np.array(crossings).sum(axis=0)/nlines)
+
+        return features
+
+
 class Stroke(object):
     def __init__(self, coords, id):
         self.id = int(id)
         xcol = np.array([np.array(coords[0::2]).astype(np.float)])
         ycol = np.array([np.array(coords[1::2]).astype(np.float)])
+
         self.raw_coords = coords
         self.coords = np.vstack([xcol,ycol]).T
+        self.rcoords = np.vstack([xcol,ycol]).T
 
     def _norm_line_length(self):
         dists = []
@@ -208,6 +284,10 @@ class Stroke(object):
 
         self.coords = np.array(uniques)
 
+    def plot(self):
+        plt.scatter(self.coords[:,0], self.coords[:,1])
+        plt.show()
+
 
 class InkMLWriter(object):
     def __init__(self, fname, stroke_groups):
@@ -241,7 +321,8 @@ if __name__ == '__main__':
         inkml.preprocess()
 
         writer = InkMLWriter(fname, inkml.stroke_groups)
-        print(writer.write())
-
+        #print(writer.write())
+        for grp in inkml.stroke_groups:
+            print(grp.get_features())
 
     main()
