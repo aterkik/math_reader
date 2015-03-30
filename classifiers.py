@@ -105,7 +105,11 @@ if __name__ == '__main__':
     main()
 
 
-##### Current results ###
+##### Current results ########
+
+### Global features + Crossing Features ####
+# Using 200 inkml files: 64%
+
+### Crossing Features only ####
 # Using 100 inkml files (~1000 symbols): 50%
-# Using 1000 inkml files (~14000 symbols):
-# Total files (without MfrDB) (64000 symbols): 7169
+

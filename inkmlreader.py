@@ -128,7 +128,9 @@ class StrokeGroup(object):
         #TODO: append line length & angle features
         #return [self.strokes[0]._norm_line_length(),
         #        self.strokes[0]._angle_feature()]
-        return self.get_crossings_features()
+        crossings = self.get_crossings_features()
+        global_features = self.get_global_features()
+        return crossings + global_features
 
     def __unicode__(self):
         return "<StrokeGroup '%s' %s>" % (str(self.target), str(self.strokes))
@@ -144,6 +146,30 @@ class StrokeGroup(object):
         """
         out = "\n".join([strk.render(offset=offset) for strk in self.strokes])
         return out
+
+    def get_global_features(self):
+        n_traces = len(self.strokes)
+        line_len = self._get_line_length()
+
+        if line_len[1] > 0:
+            aspect_ratio = float(line_len[0])/line_len[1]
+        else:
+            aspect_ratio = float(line_len[0])
+
+        all_coords = self.get_coords()
+        mean_xy = all_coords.sum(axis=0) / float(all_coords.shape[0])
+        # TODO: remaining: angular change, sharp points, covariances
+        return [n_traces, aspect_ratio] + line_len + mean_xy.tolist()
+
+    def _get_line_length(self):
+        # We want the sum of line lengths for all the strokes
+        # and the average of the line lengths
+        total_len = 0
+        for strk in self.strokes:
+            _, ymin = np.min(strk.coords.T, axis=0)
+            _, ymax = np.max(strk.coords.T, axis=0)
+            total_len += (ymax-ymin)
+        return [total_len, float(total_len)/len(self.strokes)]
 
     def get_crossings_features(self):
         if not self._is_preprocessed:
