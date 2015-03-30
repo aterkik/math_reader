@@ -98,11 +98,12 @@ class StrokeGroup(object):
         wh_ratio = (xmax-xmin)/ydiff if ydiff != 0 else xmax-xmin
         for strk in self.strokes:
             strk.scale_size(xmin, ymin, xmax-xmin, ymax-ymin, wh_ratio, yhigh=100)
-        #self.get_features()
+        self.get_features()
 
     def get_features(self):
         return [self.strokes[0]._norm_line_length(),
-                self.strokes[0]._angle_feature()]
+                self.strokes[0]._angle_feature(),
+                self.strokes[0]._curvature()]
 
 
 
@@ -147,6 +148,15 @@ class Stroke(object):
             a = angle(p2,p1)
             angles.append(a)
         return np.array(angles)
+
+    def _curvature(self):
+        curves = []
+        for i,row in enumerate(self.coords.T[2:]):
+            curves.append(curve(self.coords.T[i-2],self.coords.T[i],self.coords.T[i+2]))
+        print(curves)
+
+        return np.array(curves)
+
 
 
     def __unicode__(self):
@@ -226,11 +236,24 @@ class InkMLWriter(object):
         annot = content.split("</annotationXML>")[0] + "</annotationXML>"
         return annot
 
+
+def distance(p1,p2):
+    return np.linalg.norm(p2-p1)
+
 def length(v):
     return np.sqrt(np.dot(v, v))
 
 def angle(v1,v2):
     return np.arccos(np.dot(v1, v2) / (length(v1) * length(v2)))
+
+def curve(p1,p2,p3):
+    a = distance(p1,p2)
+    b = distance(p2,p3)
+    c = distance(p1,p3)
+    res = (a**2 + b**2 - c**2) / (2*a*b)
+    angleC = np.arccos(round(res))
+    return angleC
+
 
 if __name__ == '__main__':
     def main():
@@ -241,7 +264,7 @@ if __name__ == '__main__':
         inkml.preprocess()
 
         writer = InkMLWriter(fname, inkml.stroke_groups)
-        print(writer.write())
+        # print(writer.write())
 
 
     main()
