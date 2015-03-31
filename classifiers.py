@@ -2,6 +2,9 @@ from inkmlreader import inkML
 import numpy as np
 from sklearn import svm
 
+from sklearn.ensemble import AdaBoostClassifier
+
+
 ######## Utility functions ################
 
 TRAIN_PATH = 'TrainINKML_v3/'
@@ -58,6 +61,7 @@ def split_dataset(dataset, test_percentage):
     """Split dataset into training and test"""
     #TODO: pick test data randomly. Keeping symbol priors evenly distributed.
     row, col = dataset.shape
+    #np.random.shuffle(dataset)
     split_right = row - int(row * test_percentage)
     test_data = dataset[split_right:,:]
     train_data = dataset[:split_right,:]
@@ -71,7 +75,8 @@ def split_dataset(dataset, test_percentage):
 def run_svm(train_data, test_data):
     X = train_data[:,:-1]
     Y = train_data[:,-1]
-    rbf_svc = svm.SVC(kernel='rbf')
+    # rbf_svc = AdaBoostClassifier(svm.SVC(kernel='linear'),algorithm='SAMME')
+    rbf_svc = svm.SVC(kernel='linear')
     rbf_svc.fit(X, Y)
     results = []
     for idx, row in enumerate(test_data):
