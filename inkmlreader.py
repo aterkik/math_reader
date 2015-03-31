@@ -130,7 +130,7 @@ class StrokeGroup(object):
         crossings = self.get_crossings_features()
         global_features = self.get_global_features()
         extra_features = self.get_extra_features()
-        return crossings + global_features
+        return crossings + global_features + extra_features
 
     def __unicode__(self):
         return "<StrokeGroup '%s' %s>" % (str(self.target), str(self.strokes))
@@ -168,15 +168,26 @@ class StrokeGroup(object):
         curv_means = []
         curv_vars = []
         for stroke in self.strokes:
+
             angles = stroke._angle_feature()
             dist = stroke._norm_line_length()
             curves = stroke._curvature()
-
-            angle_means.append(np.mean(angles))
-            angle_vars.append(np.var(angles))
-            curv_means.append(np.mean(curves))
-            curv_vars.append(np.var(curves))
-            distances.append(np.sum(dist))
+            if len(angles) != 0:
+                angle_means.append(np.mean(angles))
+                angle_vars.append(np.var(angles))
+            if len(curves) != 0:
+                curv_means.append(np.mean(curves))
+                curv_vars.append(np.var(curves))
+            if len(dist) != 0:
+                distances.append(np.sum(dist))
+        if len(angle_means) == 0:
+            angle_means = [-99]
+            angle_vars = [-99]
+        if len(curv_means) == 0:
+            curv_means = [-99]
+            curv_vars = [-99]
+        if len(distances) == 0:
+            distances = [-99]
         return [np.mean(angle_means),np.mean(angle_vars),np.sum(distances),np.mean(curv_means),np.mean(curv_vars)]
 
 
@@ -374,8 +385,11 @@ def curve(p1,p2,p3):
     a = distance(p1,p2)
     b = distance(p2,p3)
     c = distance(p1,p3)
+    if a == 0 or b == 0:
+        return -99
     res = (a**2 + b**2 - c**2) / (2*a*b)
     angleC = np.arccos(round(res))
+
     return angleC
 
 
