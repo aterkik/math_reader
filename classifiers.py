@@ -1,5 +1,6 @@
 from inkmlreader import inkML
 import numpy as np
+from sklearn import svm
 
 ######## Utility functions ################
 
@@ -44,10 +45,13 @@ def load_dataset():
 
     data = np.array([])
     for symbol in symbols:
+        features = symbol.get_features()
+        # features = [1,2]
         if data.shape[0] == 0:
-            data = np.array(symbol.get_features() + [symbol.target])
+
+            data = np.array(features + [symbol.target])
         else:
-            data = np.vstack((data, symbol.get_features() + [symbol.target]))
+            data = np.vstack((data, features + [symbol.target]))
     return data
 
 def split_dataset(dataset, test_percentage):
@@ -63,8 +67,22 @@ def split_dataset(dataset, test_percentage):
 ########## End utility functions ##############
 
 
+############# SVM Classifier ##################
+def run_svm(train_data, test_data):
+    X = train_data[:,:-1]
+    Y = train_data[:,-1]
+    rbf_svc = svm.SVC(kernel='rbf')
+    rbf_svc.fit(X, Y)
+    results = []
+    for idx, row in enumerate(test_data):
+        y_prime = rbf_svc.predict(row)[0]
+        results.append(y_prime)
+    return np.array(results)
+
+
+
 ######## 1-NN Nearest Neighbor classifier #####
-def euclid_dist(x,y):   
+def euclid_dist(x,y):
     """Euclidean distance"""
     return np.sqrt(np.sum((x-y)**2))
 
@@ -95,7 +113,8 @@ def main():
     train_data, test_data = split_dataset(dataset, 1/3.0)
 
     col = test_data.shape[1]
-    pred = run_nearest_nbr1(train_data, test_data[:,:col-1])
+    pred = run_svm(train_data, test_data[:,:col-1])
+    # pred = run_nearest_nbr1(train_data, test_data[:,:col-1])
 
     success = np.sum(pred == test_data[:,col-1])
     print("Classification rate: %d%%" % (success*100/float(pred.shape[0])))
@@ -112,4 +131,3 @@ if __name__ == '__main__':
 
 ### Crossing Features only ####
 # Using 100 inkml files (~1000 symbols): 50%
-

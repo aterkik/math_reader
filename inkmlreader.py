@@ -129,6 +129,7 @@ class StrokeGroup(object):
         #        self.strokes[0]._angle_feature()]
         crossings = self.get_crossings_features()
         global_features = self.get_global_features()
+        extra_features = self.get_extra_features()
         return crossings + global_features
 
     def __unicode__(self):
@@ -159,6 +160,25 @@ class StrokeGroup(object):
         mean_xy = all_coords.sum(axis=0) / float(all_coords.shape[0])
         # TODO: remaining: angular change, sharp points, covariances
         return [n_traces, aspect_ratio] + line_len + mean_xy.tolist()
+
+    def get_extra_features(self):
+        angle_means = []
+        angle_vars = []
+        distances = []
+        curv_means = []
+        curv_vars = []
+        for stroke in self.strokes:
+            angles = stroke._angle_feature()
+            dist = stroke._norm_line_length()
+            curves = stroke._curvature()
+
+            angle_means.append(np.mean(angles))
+            angle_vars.append(np.var(angles))
+            curv_means.append(np.mean(curves))
+            curv_vars.append(np.var(curves))
+            distances.append(np.sum(dist))
+        return [np.mean(angle_means),np.mean(angle_vars),np.sum(distances),np.mean(curv_means),np.mean(curv_vars)]
+
 
     def _get_line_length(self):
         # We want the sum of line lengths for all the strokes
@@ -233,11 +253,9 @@ class Stroke(object):
     def _norm_line_length(self):
         dists = []
         p1 = self.coords.T[0]
-        total = 0
         for p2 in self.coords.T[1:]:
             dist = np.linalg.norm(p2-p1)
             dists.append(dist)
-            total += dist
             p1 = p2
         return np.array(dists)
 
@@ -253,8 +271,6 @@ class Stroke(object):
         curves = []
         for i,row in enumerate(self.coords.T[2:]):
             curves.append(curve(self.coords.T[i-2],self.coords.T[i],self.coords.T[i+2]))
-        print(curves)
-
         return np.array(curves)
 
 
@@ -348,7 +364,11 @@ def length(v):
     return np.sqrt(np.dot(v, v))
 
 def angle(v1,v2):
-    return np.arccos(np.dot(v1, v2) / (length(v1) * length(v2)))
+    dot = (length(v1) * length(v2))
+    #orthogonal
+    if dot == 0:
+        return 1.57079
+    return np.arccos(round(np.dot(v1, v2) /dot))
 
 def curve(p1,p2,p3):
     a = distance(p1,p2)
