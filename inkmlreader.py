@@ -3,7 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from utils import Line, get_line_crossing, generate_subcrossings
 
-
 """
     Usage:
     >>> inkml = inkML('test.inkml')
