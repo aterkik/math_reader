@@ -1,6 +1,9 @@
 from inkmlreader import inkML
 import numpy as np
 from sklearn import svm
+from collections import defaultdict
+import operator
+import random
 
 from sklearn.ensemble import AdaBoostClassifier
 
@@ -29,7 +32,7 @@ def load_dataset():
         import sys
         sys.exit(1)
 
-    symbols = []
+    inkmls = []
     for i, fname in enumerate(train_files):
         # MfrDB files have three coordinates. Skip for now
         if 'MfrDB' in fname:
@@ -37,11 +40,17 @@ def load_dataset():
 
         inkml = inkML(TRAIN_PATH + fname)
         inkml.preprocess()
-        # inkml.stroke_groups is a list of symbols
-        symbols.extend(inkml.stroke_groups)
+        inkmls.append(inkml)
 
         if i >= MAX_FILES:
             break
+    return inkmls
+
+
+def inkmls_to_feature_matrix(inkmls):
+    symbols = []
+    for inkml in inkmls:
+        symbols.extend(inkml.stroke_groups)
 
     if VERBOSE:
         print("Loaded %s symbols..." % (len(symbols)))
@@ -57,16 +66,64 @@ def load_dataset():
             data = np.vstack((data, features + [symbol.target]))
     return data
 
-def split_dataset(dataset, test_percentage):
-    """Split dataset into training and test"""
-    #TODO: pick test data randomly. Keeping symbol priors evenly distributed.
-    row, col = dataset.shape
-    #np.random.shuffle(dataset)
-    split_right = row - int(row * test_percentage)
-    test_data = dataset[split_right:,:]
-    train_data = dataset[:split_right,:]
 
-    return train_data, test_data
+def split_dataset(inkmls, test_percentage):
+    """Split dataset into training and test"""
+    class_counts = defaultdict(int)
+    for inkml in inkmls:
+        for symbol in inkml.stroke_groups:
+            class_counts[symbol.target] += 1
+
+    testf_target = {}
+    for sym, freq in class_counts.items():
+        testf_target[sym] = int(test_percentage*freq)
+
+    sorted_targets = sorted(testf_target.items(), key=operator.itemgetter(1))
+
+    test_fold, train_fold = [], []
+    for symbol, count in sorted_targets:
+        if count == 1:
+            # Too small a frequency to bother
+            continue
+
+        matches = remove_files_with_symbol(symbol, inkmls)
+        test_portion, train_portion = random_split_by_count(matches, symbol, count)
+        test_fold.extend(test_portion)
+        train_fold.extend(train_portion)
+
+    return train_fold, test_fold
+
+
+def remove_files_with_symbol(symbol, inkmls):
+    """From a list of InkML objects (inkmls), removes all objects
+    containing the symbol (symbol) and returns the removed ones"""
+    matches = []
+    for inkml in inkmls:
+        if inkml.has_symbol(symbol):
+            matches.append(inkml)
+            inkmls.remove(inkml)
+    return matches
+    
+def random_split_by_count(inkmls, symbol, count):                  
+    """Splits inkmls into two partitions into                      
+    approximately count and remaining files"""                     
+                                                                 
+    sorted_inkmls = sorted(inkmls,                                 
+                    key=lambda inkml: inkml.symbol_count(symbol))
+    partition_count = 0                                            
+    partition_idx = 0                                              
+    idx = 0                                                        
+    for inkml in sorted_inkmls:                                    
+        if partition_count >= count:                               
+            break                                                  
+        partition_count += inkml.symbol_count(symbol)              
+        idx += 1                                                   
+
+    # shuffle items
+    random.shuffle(inkmls)
+                                                                 
+    return inkmls[:idx+1], inkmls[idx+1:]                          
+
 
 ########## End utility functions ##############
 
@@ -113,9 +170,12 @@ def run_nearest_nbr1(train_data, test_data):
 
 
 def main():
-    dataset = load_dataset()
-    # 1/3rd test set, 2/3rd training set
-    train_data, test_data = split_dataset(dataset, 1/3.0)
+    TEST_FRACTION = 1.0/3.0
+
+    inkmls = load_dataset()
+    train, test = split_dataset(inkmls, TEST_FRACTION)
+    train_data = inkmls_to_feature_matrix(train)
+    test_data = inkmls_to_feature_matrix(test)
 
     col = test_data.shape[1]
     pred = run_svm(train_data, test_data[:,:col-1])
