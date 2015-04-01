@@ -53,6 +53,14 @@ class inkML(object):
         for strk_grp in self.stroke_groups:
             strk_grp.preprocess()
 
+    def has_symbol(self, symbol):
+        for grp in self.stroke_groups:
+            if grp.target == symbol:
+                return True
+        return False
+
+    def symbol_count(self, symbol):
+        return np.sum([grp.target == symbol for grp in self.stroke_groups])
 
     @staticmethod
     def _parse_inkml(inkml_data):
