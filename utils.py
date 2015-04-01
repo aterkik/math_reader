@@ -50,6 +50,9 @@ def get_line_crossing(line, symbol):
 
 def generate_subcrossings(start, end, k, direction='vert'):
     lines = []
+    if start == end:
+        return lines
+
     step = (end-start)/float(k)
     for i in np.arange(start+(step/2), end, step):
         if direction == 'vert':
@@ -57,4 +60,3 @@ def generate_subcrossings(start, end, k, direction='vert'):
         else:
             lines.append(Line(m=0, b=i))
     return lines
-
