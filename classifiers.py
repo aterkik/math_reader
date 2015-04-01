@@ -2,6 +2,9 @@ from datautils import *
 import numpy as np
 from sklearn import svm
 from sklearn.ensemble import AdaBoostClassifier
+from sklearn import preprocessing
+
+SCALING_ON = False
 
 ############# SVM Classifier ##################
 def run_svm(train_data, test_data):
@@ -48,17 +51,25 @@ def main():
     TEST_FRACTION = 1.0/3.0
 
     inkmls = load_dataset()
-    train, test = split_dataset(inkmls, TEST_FRACTION)
+    train_inkmls, test_inkmls = split_dataset(inkmls, TEST_FRACTION)
     print("Loading train data...")
-    train_data = inkmls_to_feature_matrix(train)
+    train_data = inkmls_to_feature_matrix(train_inkmls)
     print("Loading test data...")
-    test_data = inkmls_to_feature_matrix(test)
+    test_data = inkmls_to_feature_matrix(test_inkmls)
 
-    col = test_data.shape[1]
-    pred = run_svm(train_data, test_data[:,:col-1])
-    # pred = run_nearest_nbr1(train_data, test_data[:,:col-1])
+    scaler = preprocessing.StandardScaler()
+    train_X, train_Y = train_data[:,:-1], train_data[:,-1]
+    test_X, test_Y = test_data[:,:-1], test_data[:,-1]
 
-    success = np.sum(pred == test_data[:,col-1])
+    if SCALING_ON:
+        train_X = scaler.fit_transform(train_X.astype(np.float))
+        test_X = scaler.transform(test_X.astype(np.float))
+    train_data = np.column_stack((train_X, train_Y))
+
+    pred = run_svm(train_data, test_X)
+    # pred = run_nearest_nbr1(train_data, test_X)
+
+    success = np.sum(pred == test_Y)
     print("Classification rate: %d%%" % (success*100/float(pred.shape[0])))
 
 
