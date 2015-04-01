@@ -49,7 +49,9 @@ def main():
 
     inkmls = load_dataset()
     train, test = split_dataset(inkmls, TEST_FRACTION)
+    print("Loading train data...")
     train_data = inkmls_to_feature_matrix(train)
+    print("Loading test data...")
     test_data = inkmls_to_feature_matrix(test)
 
     col = test_data.shape[1]

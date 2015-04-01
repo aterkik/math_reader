@@ -48,6 +48,7 @@ class inkML(object):
         # one symbol and stroke3 is makes a different symbol
         self.root, self.stroke_groups = self._parse_inkml(fd.read())
         self.stroke_groups = sorted(self.stroke_groups, key=lambda grp: grp.strokes[0].id)
+        self.src = fname
 
     def preprocess(self):
         for strk_grp in self.stroke_groups:

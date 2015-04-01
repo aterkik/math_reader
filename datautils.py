@@ -47,7 +47,7 @@ def inkmls_to_feature_matrix(inkmls):
         symbols.extend(inkml.stroke_groups)
 
     if VERBOSE:
-        print("Loaded %s symbols..." % (len(symbols)))
+        print("Loaded %s symbols (%s files)..." % (len(symbols), len(inkmls)))
 
     data = np.array([])
     for symbol in symbols:
@@ -62,50 +62,81 @@ def inkmls_to_feature_matrix(inkmls):
 
 
 def split_dataset(inkmls, test_percentage):
-    """Split dataset into training and test"""
+    """Splits (randomly!) dataset into training and test.
+       Works by calculating target frequency counts for each symbol
+       for both folds. Then, starting from the symbols with the
+       lowest frequency, it partitions the files containing each symbol
+       into the two folds. Because the algorithm works greedily,
+       which fold gets priority for each symbol affects the distribution quality
+       very much. To minimize this effect, the fold priority is alternated at each
+       iteration.
+    """
     class_counts = defaultdict(int)
     for inkml in inkmls:
         for symbol in inkml.stroke_groups:
             class_counts[symbol.target] += 1
 
+    trainf_target = {}
+    for sym, freq in class_counts.items():
+        trainf_target[sym] = int((1 - test_percentage)*freq)
+
     testf_target = {}
     for sym, freq in class_counts.items():
         testf_target[sym] = int(test_percentage*freq)
 
-    sorted_targets = sorted(testf_target.items(), key=operator.itemgetter(1))
+    sorted_targets = sorted(trainf_target.items(), key=operator.itemgetter(1))
+
 
     test_fold, train_fold = [], []
+    cinkmls = len(inkmls)
+    i = 0
     for symbol, count in sorted_targets:
-        if count == 1:
-            # Too small a frequency to bother
-            continue
+        matches = get_files_with_symbol(symbol, inkmls)
 
-        matches = remove_files_with_symbol(symbol, inkmls)
-        test_portion, train_portion = random_split_by_count(matches, symbol, count)
+        if i % 2 == 0:
+            train_portion, test_portion = random_select_by_count(matches, symbol, count)
+        else:
+            test_portion, train_portion = random_select_by_count(matches, symbol, testf_target[symbol])
+
         test_fold.extend(test_portion)
         train_fold.extend(train_portion)
+
+        for inkml in matches:
+            inkmls.remove(inkml)
+        i += 1
+
+    # make the remaining files training
+    train_fold.extend(inkmls)
+
+    test_achieved = defaultdict(int)
+    for inkml in test_fold:
+        for grp in inkml.stroke_groups:
+            test_achieved[grp.target] += 1
+
+    train_achieved = defaultdict(int)
+    for inkml in train_fold:
+        for grp in inkml.stroke_groups:
+            train_achieved[grp.target] += 1
 
     return train_fold, test_fold
 
 
-def remove_files_with_symbol(symbol, inkmls):
-    """From a list of InkML objects (inkmls), removes all objects
-    containing the symbol (symbol) and returns the removed ones"""
+def get_files_with_symbol(symbol, inkmls):
+    """From a list of InkML objects (inkmls), returns all objects
+    containing the symbol (symbol) """
     matches = []
-    for inkml in inkmls:
+    for i, inkml in enumerate(inkmls):
         if inkml.has_symbol(symbol):
             matches.append(inkml)
-            inkmls.remove(inkml)
     return matches
     
-def random_split_by_count(inkmls, symbol, count):                  
+def random_select_by_count(inkmls, symbol, count):
     """Splits inkmls into two partitions into                      
     approximately count and remaining files"""                     
                                                                  
     sorted_inkmls = sorted(inkmls,                                 
                     key=lambda inkml: inkml.symbol_count(symbol))
     partition_count = 0                                            
-    partition_idx = 0                                              
     idx = 0                                                        
     for inkml in sorted_inkmls:                                    
         if partition_count >= count:                               
@@ -116,7 +147,7 @@ def random_split_by_count(inkmls, symbol, count):
     # shuffle items
     random.shuffle(inkmls)
                                                                  
-    return inkmls[:idx+1], inkmls[idx+1:]                          
+    return inkmls[:idx], inkmls[idx:]
 
 
 ########## End utility functions ##############
