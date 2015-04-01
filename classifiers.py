@@ -3,6 +3,7 @@ import numpy as np
 from sklearn import svm
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn import preprocessing
+import sys
 
 SCALING_ON = False
 
@@ -66,8 +67,14 @@ def main():
         test_X = scaler.transform(test_X.astype(np.float))
     train_data = np.column_stack((train_X, train_Y))
 
-    pred = run_svm(train_data, test_X)
-    # pred = run_nearest_nbr1(train_data, test_X)
+    lower_args = map(lambda s: s.lower(), sys.argv)
+    if "--nnr" in lower_args:
+        print("Running 1-NN Nearest Neighbor...")
+        pred = run_nearest_nbr1(train_data, test_X)
+    else:
+        # Assume SVM by default
+        print("Running SVM...")
+        pred = run_svm(train_data, test_X)
 
     success = np.sum(pred == test_Y)
     print("Classification rate: %d%%" % (success*100/float(pred.shape[0])))
@@ -78,9 +85,5 @@ if __name__ == '__main__':
 
 
 ##### Current results ########
-
-### Global features + Crossing Features ####
-# Using 200 inkml files: 64%
-
-### Crossing Features only ####
-# Using 100 inkml files (~1000 symbols): 50%
+# Using 200 inkml files (1-NNR): 73%
+# Using 200 inkml files (SVM): ~80%
