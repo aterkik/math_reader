@@ -1,25 +1,18 @@
-from datautils import *
-import numpy as np
-from sklearn import svm
-from sklearn.ensemble import AdaBoostClassifier
-from sklearn import preprocessing
 import sys
+import numpy as np
+from sklearn.externals import joblib
+from sklearn import preprocessing
+from datautils import *
+from train_classifiers import load_testset_inkmls, get_train_test_split
 
-SCALING_ON = False
 
 ############# SVM Classifier ##################
-def run_svm(train_data, test_data):
-    X = train_data[:,:-1]
-    Y = train_data[:,-1]
-    # rbf_svc = AdaBoostClassifier(svm.SVC(kernel='linear'),algorithm='SAMME')
-    rbf_svc = svm.SVC(kernel='linear')
-    rbf_svc.fit(X, Y)
+def run_svm(svm, test_data):
     results = []
     for idx, row in enumerate(test_data):
-        y_prime = rbf_svc.predict(row)[0]
+        y_prime = svm.predict(row)[0]
         results.append(y_prime)
     return np.array(results)
-
 
 
 ######## 1-NN Nearest Neighbor classifier #####
@@ -48,33 +41,33 @@ def run_nearest_nbr1(train_data, test_data):
 ###### End Nearest Neighbor ###########
 
 
+
 def main():
-    TEST_FRACTION = 1.0/3.0
-
-    inkmls = load_dataset()
-    train_inkmls, test_inkmls = split_dataset(inkmls, TEST_FRACTION)
-    print("Loading train data...")
-    train_data = inkmls_to_feature_matrix(train_inkmls)
-    print("Loading test data...")
-    test_data = inkmls_to_feature_matrix(test_inkmls)
-
-    scaler = preprocessing.StandardScaler()
-    train_X, train_Y = train_data[:,:-1], train_data[:,-1]
-    test_X, test_Y = test_data[:,:-1], test_data[:,-1]
-
-    if SCALING_ON:
-        train_X = scaler.fit_transform(train_X.astype(np.float))
-        test_X = scaler.transform(test_X.astype(np.float))
-    train_data = np.column_stack((train_X, train_Y))
-
     lower_args = map(lambda s: s.lower(), sys.argv)
+
     if "--nnr" in lower_args:
+        train_data, test_inkmls = get_train_test_split()
+        print("Loading test data...")
+        test_data = inkmls_to_feature_matrix(test_inkmls)
+        test_X, test_Y = test_data[:,:-1], test_data[:,-1]
         print("Running 1-NN Nearest Neighbor...")
         pred = run_nearest_nbr1(train_data, test_X)
     else:
         # Assume SVM by default
+        print("Loading test data...")
+        test_inkmls = load_testset_inkmls()
+        test_data = inkmls_to_feature_matrix(test_inkmls)
+        test_X, test_Y = test_data[:,:-1], test_data[:,-1]
+
+        try:
+            svm = joblib.load('svc.pkl')
+        except:
+            print("!!! Error: couldn't load parameter file")
+            print("!!! Try running ./train_classifiers.py first")
+            sys.exit(1)
+
         print("Running SVM...")
-        pred = run_svm(train_data, test_X)
+        pred = run_svm(svm, test_X)
 
     success = np.sum(pred == test_Y)
     print("Classification rate: %d%%" % (success*100/float(pred.shape[0])))

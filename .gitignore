@@ -1,2 +1,7 @@
 *.pyc
 TrainINKML_v3/*
+
+# Parameter files
+test_set
+*.pkl
+*.npy

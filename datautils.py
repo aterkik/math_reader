@@ -20,19 +20,22 @@ def load_dataset():
     # Calculate features for each symbol and append target output
 
     try:
-        train_files = open(TRAIN_PATH + TRAIN_FNAME_SRC).read().splitlines()
+        inkml_file_names = open(TRAIN_PATH + TRAIN_FNAME_SRC).read().splitlines()
     except:
         print("!!! Error opening training data. Please modify TRAIN_SRC_PATH.")
         import sys
         sys.exit(1)
 
+    return get_inkml_objects(inkml_file_names)
+
+def get_inkml_objects(inkml_file_names, prefix=TRAIN_PATH):
     inkmls = []
-    for i, fname in enumerate(train_files):
+    for i, fname in enumerate(inkml_file_names):
         # MfrDB files have three coordinates. Skip for now
         if 'MfrDB' in fname:
             continue
 
-        inkml = inkML(TRAIN_PATH + fname)
+        inkml = inkML(prefix + fname)
         inkml.preprocess()
         inkmls.append(inkml)
 
