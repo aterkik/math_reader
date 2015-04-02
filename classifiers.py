@@ -1,4 +1,6 @@
 import sys
+import os
+import click
 import numpy as np
 from sklearn.externals import joblib
 from sklearn import preprocessing
@@ -41,21 +43,40 @@ def run_nearest_nbr1(train_data, test_data):
 ###### End Nearest Neighbor ###########
 
 
+@click.command()
+@click.option('--inputdir', default='', help='Input directory containing .inkml files')
+@click.option('--outputdir', default='LG_output/', help='Output directory where .lg files are generated into')
+@click.option('--nnr', is_flag=True, help='Use 1-NN Classifier')
+@click.argument('inputs', nargs=-1)
+def main(inputdir, outputdir, nnr, inputs):
+    file_names = []
+    if inputdir:
+        file_names = filter(lambda f: f.endswith('.inkml'), os.listdir(inputdir))
+        file_names = map(lambda f: inputdir + f, file_names)
+    if inputs:
+        file_names.extend(inputs)
 
-def main():
-    lower_args = map(lambda s: s.lower(), sys.argv)
-
-    if "--nnr" in lower_args:
+    if nnr:
         train_data, test_inkmls = get_train_test_split()
-        print("Loading test data...")
+        if file_names:
+            test_inkmls = get_inkml_objects(file_names, prefix='')
+        else:
+            print("Using hold-out set for test data (not user-supplied)...")
+
+        print("Generating features for test data...")
         test_data = inkmls_to_feature_matrix(test_inkmls)
         test_X, test_Y = test_data[:,:-1], test_data[:,-1]
         print("Running 1-NN Nearest Neighbor...")
         pred = run_nearest_nbr1(train_data, test_X)
     else:
         # Assume SVM by default
-        print("Loading test data...")
-        test_inkmls = load_testset_inkmls()
+        if file_names:
+            test_inkmls = get_inkml_objects(file_names, prefix='')
+        else:
+            print("Using hold-out set for test data (not user-supplied)...")
+            test_inkmls = load_testset_inkmls()
+
+        print("Generating features for test data...")
         test_data = inkmls_to_feature_matrix(test_inkmls)
         test_X, test_Y = test_data[:,:-1], test_data[:,-1]
 
@@ -71,6 +92,7 @@ def main():
 
     success = np.sum(pred == test_Y)
     print("Classification rate: %d%%" % (success*100/float(pred.shape[0])))
+
 
 
 if __name__ == '__main__':

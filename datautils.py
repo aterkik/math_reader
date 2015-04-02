@@ -9,7 +9,7 @@ TRAIN_PATH = 'TrainINKML_v3/'
 TRAIN_FNAME_SRC = 'AllEM_part4_TRAIN_all.txt'
 
 VERBOSE = True
-# For development, limit dataset to 300 files
+# For development, limit dataset size (make negative to surpass any limit)
 MAX_FILES = 200
 
 def load_dataset():
@@ -39,7 +39,7 @@ def get_inkml_objects(inkml_file_names, prefix=TRAIN_PATH):
         inkml.preprocess()
         inkmls.append(inkml)
 
-        if i >= MAX_FILES:
+        if i >= MAX_FILES and MAX_FILES >= 0:
             break
     return inkmls
 
@@ -50,10 +50,11 @@ def inkmls_to_feature_matrix(inkmls):
         symbols.extend(inkml.stroke_groups)
 
     if VERBOSE:
-        print("Loaded %s symbols (%s files)..." % (len(symbols), len(inkmls)))
+        print("Loaded %s symbols (%s files)...\n" % (len(symbols), len(inkmls)))
 
     data = np.array([])
-    for symbol in symbols:
+    total = len(symbols)
+    for i, symbol in enumerate(symbols):
         features = symbol.get_features()
         # features = [1,2]
         if data.shape[0] == 0:
@@ -61,6 +62,9 @@ def inkmls_to_feature_matrix(inkmls):
             data = np.array(features + [symbol.target])
         else:
             data = np.vstack((data, features + [symbol.target]))
+
+        if i % 250 == 0:
+            print("....%.2f%% complete (generating features)" % (100 * float(i)/total))
     return data
 
 

@@ -75,7 +75,12 @@ class inkML(object):
         for trgrp in tracegrps:
             trids = map(lambda trv: trv.attrib['traceDataRef'], trgrp.findall(np + 'traceView'))
             trids = list(trids)
-            ground_truth = trgrp.find(np + 'annotation').text
+
+            try:
+                ground_truth = trgrp.find(np + 'annotation').text
+            except:
+                # User supplied inkmls may not contain target
+                ground_truth = ' '
 
             grp = []
             # TODO: inefficent loop!
