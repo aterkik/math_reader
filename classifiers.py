@@ -23,11 +23,11 @@ def euclid_dist(x,y):
 def nearest_nbr1(x, data):
     """Returns predicted nearest neighbor output"""
     x = x.astype(np.float)
-    y_col = data.shape[1] - 1
-    dist = [euclid_dist(x, np.array(row).astype(float)) for row in data[:,:y_col]]
-    nbr_idx = np.argsort(dist)[0]
+    data_X, data_y = data[:,:-1].astype(np.float), data[:,-1]
+    dist = np.sqrt(np.sum((data_X-x)**2, axis=1))
+    closest_nbr = np.argsort(dist)[0]
 
-    return data[nbr_idx, y_col]
+    return data_y[closest_nbr]
 
 def run_nearest_nbr1(train_data, test_data):
     shape = test_data.shape
