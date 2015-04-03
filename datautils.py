@@ -136,26 +136,25 @@ def get_files_with_symbol(symbol, inkmls):
         if inkml.has_symbol(symbol):
             matches.append(inkml)
     return matches
-    
+
 def random_select_by_count(inkmls, symbol, count):
-    """Splits inkmls into two partitions into                      
-    approximately count and remaining files"""                     
-                                                                 
-    sorted_inkmls = sorted(inkmls,                                 
+    """Splits inkmls into two partitions into
+    approximately count and remaining files"""
+
+    sorted_inkmls = sorted(inkmls,
                     key=lambda inkml: inkml.symbol_count(symbol))
-    partition_count = 0                                            
-    idx = 0                                                        
-    for inkml in sorted_inkmls:                                    
-        if partition_count >= count:                               
-            break                                                  
-        partition_count += inkml.symbol_count(symbol)              
-        idx += 1                                                   
+    partition_count = 0
+    idx = 0
+    for inkml in sorted_inkmls:
+        if partition_count >= count:
+            break
+        partition_count += inkml.symbol_count(symbol)
+        idx += 1
 
     # shuffle items
     random.shuffle(inkmls)
-                                                                 
+
     return inkmls[:idx], inkmls[idx:]
 
 
 ########## End utility functions ##############
-

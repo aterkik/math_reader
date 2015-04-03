@@ -139,8 +139,7 @@ class StrokeGroup(object):
 
     def get_features(self):
         #TODO: append line length & angle features
-        #return [self.strokes[0]._norm_line_length(),
-        #        self.strokes[0]._angle_feature()]
+
         crossings = self.get_crossings_features()
         global_features = self.get_global_features()
         extra_features = self.get_extra_features()
@@ -181,6 +180,7 @@ class StrokeGroup(object):
         distances = []
         curv_means = []
         curv_vars = []
+        npoints = []
         for stroke in self.strokes:
 
             angles = stroke._angle_feature()
@@ -194,6 +194,8 @@ class StrokeGroup(object):
                 curv_vars.append(np.var(curves))
             if len(dist) != 0:
                 distances.append(np.sum(dist))
+            npoints.append(len(stroke.coords.T))
+        #Sometimes the strokes are so short there's no angle/curve
         if len(angle_means) == 0:
             angle_means = [-99]
             angle_vars = [-99]
@@ -202,7 +204,7 @@ class StrokeGroup(object):
             curv_vars = [-99]
         if len(distances) == 0:
             distances = [-99]
-        return [np.mean(angle_means),np.mean(angle_vars),np.sum(distances),np.mean(curv_means),np.mean(curv_vars)]
+        return [np.mean(angle_means),np.mean(angle_vars),np.sum(distances),np.mean(curv_means),np.mean(curv_vars),np.sum(npoints)]
 
 
     def _get_line_length(self):
