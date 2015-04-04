@@ -57,11 +57,19 @@ def main(inputdir, outputdir, nnr, inputs):
         file_names.extend(inputs)
 
     if nnr:
-        train_data, test_inkmls = get_train_test_split()
+
+        try:
+            train_data = np.load('1nnr.npy')
+        except:
+            print("!!! Error: couldn't load parameter file")
+            print("!!! Try running './train_classifiers.py' first")
+            sys.exit(1)
+
         if file_names:
             test_inkmls = get_inkml_objects(file_names, prefix='')
         else:
             print("Using hold-out set for test data (not user-supplied)...")
+            test_inkmls = load_testset_inkmls()
 
         print("Generating features for test data...")
         test_data, strk_grps = inkmls_to_feature_matrix(test_inkmls)

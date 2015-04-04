@@ -30,8 +30,9 @@ def main():
     X, Y = train_data[:,:-1], train_data[:,-1]
     rbf_svc = svm.SVC(kernel='linear')
     rbf_svc.fit(X, Y)
-
     joblib.dump(rbf_svc, 'svc.pkl')
+
+    np.save('1nnr.npy', train_data)
     
     fnames = [inkml.src for inkml in test_inkmls]
     open('test_set', 'w').write("\r\n".join(fnames))
