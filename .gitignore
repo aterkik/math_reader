@@ -1,5 +1,6 @@
 *.pyc
 TrainINKML_v3/*
+test/
 
 # Parameter files
 test_set

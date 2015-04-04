@@ -1,9 +1,12 @@
 from datautils import *
+from utils import create_dir
 import numpy as np
 from sklearn import svm
 from sklearn.externals import joblib
 from sklearn import preprocessing
 import sys
+import os
+import shutil
 
 # what percentage to split (e.g. it's different for project vs bonus)
 # output parma file name
@@ -30,16 +33,18 @@ def main():
     X, Y = train_data[:,:-1], train_data[:,-1]
     rbf_svc = svm.SVC(kernel='linear')
     rbf_svc.fit(X, Y)
-    joblib.dump(rbf_svc, 'svc.pkl')
 
-    np.save('1nnr.npy', train_data)
-    
-    fnames = [inkml.src for inkml in test_inkmls]
-    open('test_set', 'w').write("\r\n".join(fnames))
+    create_dir('train')
+    create_dir('test')
+    joblib.dump(rbf_svc, 'train/svc.pkl')
+    np.save('train/1nnr.npy', train_data)
+
+    for inkml in test_inkmls:
+        shutil.copy2(inkml.src, 'test/' + os.path.basename(inkml.src))
 
 def load_testset_inkmls():
-    fnames = open('test_set').read().splitlines()
-    return get_inkml_objects(fnames, prefix='')
+    fnames = filter(lambda f: 'inkml' in f, os.listdir('test'))
+    return get_inkml_objects(fnames, prefix='test/')
 
 
 if __name__ == '__main__':

@@ -6,6 +6,7 @@ from sklearn.externals import joblib
 from sklearn import preprocessing
 from datautils import *
 from train_classifiers import load_testset_inkmls, get_train_test_split
+from utils import create_dir
 
 
 ############# SVM Classifier ##################
@@ -59,7 +60,7 @@ def main(inputdir, outputdir, nnr, inputs):
     if nnr:
 
         try:
-            train_data = np.load('1nnr.npy')
+            train_data = np.load('train/1nnr.npy')
         except:
             print("!!! Error: couldn't load parameter file")
             print("!!! Try running './train_classifiers.py' first")
@@ -89,7 +90,7 @@ def main(inputdir, outputdir, nnr, inputs):
         test_X, test_Y = test_data[:,:-1], test_data[:,-1]
 
         try:
-            svm = joblib.load('svc.pkl')
+            svm = joblib.load('train/svc.pkl')
         except:
             print("!!! Error: couldn't load parameter file")
             print("!!! Try running './train_classifiers.py' first")
@@ -110,9 +111,7 @@ def main(inputdir, outputdir, nnr, inputs):
 
 
 def generate_lgs(inkmls, path):
-    if not os.path.exists(path):
-        os.makedirs(path)
-
+    create_dir(path)
     for inkml in inkmls:
         fname = inkml.src.rstrip('inkml') + "lg"
         fname = path + os.path.basename(fname)

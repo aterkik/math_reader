@@ -1,4 +1,5 @@
 import numpy as np
+import os
 
 class Line(object):
     def __init__(self, m=None, b=None, x=None):
@@ -60,3 +61,8 @@ def generate_subcrossings(start, end, k, direction='vert'):
         else:
             lines.append(Line(m=0, b=i))
     return lines
+
+def create_dir(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+
