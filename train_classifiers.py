@@ -17,7 +17,7 @@ def get_train_test_split():
     inkmls = load_dataset()
     train_inkmls, test_inkmls = split_dataset(inkmls, TEST_FRACTION)
     print("Loading train data...")
-    train_data = inkmls_to_feature_matrix(train_inkmls)
+    train_data, _ = inkmls_to_feature_matrix(train_inkmls)
     
     train_X, train_Y = train_data[:,:-1], train_data[:,-1]
     train_data = np.column_stack((train_X, train_Y))

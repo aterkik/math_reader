@@ -64,10 +64,10 @@ def main(inputdir, outputdir, nnr, inputs):
             print("Using hold-out set for test data (not user-supplied)...")
 
         print("Generating features for test data...")
-        test_data = inkmls_to_feature_matrix(test_inkmls)
+        test_data, strk_grps = inkmls_to_feature_matrix(test_inkmls)
         test_X, test_Y = test_data[:,:-1], test_data[:,-1]
         print("Running 1-NN Nearest Neighbor...")
-        pred = run_nearest_nbr1(train_data, test_X)
+        preds = run_nearest_nbr1(train_data, test_X)
     else:
         # Assume SVM by default
         if file_names:
@@ -77,22 +77,38 @@ def main(inputdir, outputdir, nnr, inputs):
             test_inkmls = load_testset_inkmls()
 
         print("Generating features for test data...")
-        test_data = inkmls_to_feature_matrix(test_inkmls)
+        test_data, strk_grps = inkmls_to_feature_matrix(test_inkmls)
         test_X, test_Y = test_data[:,:-1], test_data[:,-1]
 
         try:
             svm = joblib.load('svc.pkl')
         except:
             print("!!! Error: couldn't load parameter file")
-            print("!!! Try running ./train_classifiers.py first")
+            print("!!! Try running './train_classifiers.py' first")
             sys.exit(1)
 
         print("Running SVM...")
-        pred = run_svm(svm, test_X)
+        preds = run_svm(svm, test_X)
 
-    success = np.sum(pred == test_Y)
-    print("Classification rate: %d%%" % (success*100/float(pred.shape[0])))
+    for i, pred in enumerate(preds):
+        strk_grps[i].prediction = pred
 
+    # Now that predictions are embedded in the objects, we can generate
+    # label graphs
+    generate_lgs(test_inkmls, outputdir)
+
+    success = np.sum(preds == test_Y)
+    print("Classification rate: %d%%" % (success*100/float(preds.shape[0])))
+
+
+def generate_lgs(inkmls, path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    for inkml in inkmls:
+        fname = inkml.src.rstrip('inkml') + "lg"
+        fname = path + os.path.basename(fname)
+        open(fname, 'w+').write(inkml.get_lg())
 
 
 if __name__ == '__main__':

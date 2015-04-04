@@ -65,7 +65,7 @@ def inkmls_to_feature_matrix(inkmls):
 
         if i % 250 == 0:
             print("....%.2f%% complete (generating features)" % (100 * float(i)/total))
-    return data
+    return data, symbols
 
 
 def split_dataset(inkmls, test_percentage):

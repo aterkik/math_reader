@@ -46,7 +46,7 @@ class inkML(object):
         # same symbol are grouped together.
         # E.g. in [[stroke1, stroke2], [stroke3] ...] stroke1 & stroke2 make
         # one symbol and stroke3 is makes a different symbol
-        self.root, self.stroke_groups = self._parse_inkml(fd.read())
+        self.root, self.stroke_groups = self._parse_inkml(fd.read(), fname)
         self.stroke_groups = sorted(self.stroke_groups, key=lambda grp: grp.strokes[0].id)
         self.src = fname
 
@@ -63,8 +63,17 @@ class inkML(object):
     def symbol_count(self, symbol):
         return np.sum([grp.target == symbol for grp in self.stroke_groups])
 
+    def get_lg(self):
+        outs = []
+        for grp in self.stroke_groups:
+            outs.append("O, %s, %s, 1.0, %s" % (
+                        grp.annot_id, grp.prediction, grp.strk_ids()))
+        out = "\n".join(outs)
+        # TODO: relationships
+        return out
+
     @staticmethod
-    def _parse_inkml(inkml_data):
+    def _parse_inkml(inkml_data, fname):
         root = ET.fromstring(inkml_data)
         np = root.tag.rstrip('ink') # get namespace, bad hack!
 
@@ -72,7 +81,7 @@ class inkML(object):
         traces = root.findall(np + 'trace')
         tracegrps = root.findall('%straceGroup/%straceGroup' % (np, np))
 
-        for trgrp in tracegrps:
+        for i, trgrp in enumerate(tracegrps):
             trids = map(lambda trv: trv.attrib['traceDataRef'], trgrp.findall(np + 'traceView'))
             trids = list(trids)
 
@@ -82,22 +91,31 @@ class inkML(object):
                 # User supplied inkmls may not contain target
                 ground_truth = ' '
 
+            try:
+                annot_id = trgrp.find(np + 'annotationXML').attrib['href']
+            except:
+                print("!! Warning: couldn't find annotationXML for tracegroup"
+                      " in file %s" % fname)
+                annot_id = "S_" + str(i)
+
             grp = []
             # TODO: inefficent loop!
             for trace in traces:
                 if trace.attrib['id'] in trids:
                     stroke = Stroke(trace.text.strip().replace(",","").split(' '), trace.attrib['id'])
                     grp.append(stroke)
-            stroke_partition.append(StrokeGroup(grp, ground_truth))
+            stroke_partition.append(StrokeGroup(grp, annot_id, ground_truth))
         return (root, stroke_partition)
 
 
 class StrokeGroup(object):
-    def __init__(self, strokes, target):
+    def __init__(self, strokes, annot_id, target):
         self.strokes = strokes
         # Sort strokes by id which corresponds to the order at which they were written
         self.strokes = sorted(self.strokes, key=lambda strk: strk.id)
+        self.annot_id = annot_id
         self.target = target
+        self.prediction = None
         # Flag to tell whether symbol is preprocessed
         self._is_preprocessed = False
         self.xmin, self.xmax = None, None
@@ -109,6 +127,10 @@ class StrokeGroup(object):
             all_coords.extend(stroke.coords.T.tolist())
 
         return np.array(all_coords)
+
+    def strk_ids(self):
+        return ", ".join([str(strk.id) for strk in self.strokes])
+
 
     def preprocess(self):
         for stroke in self.strokes:
