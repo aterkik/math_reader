@@ -1,3 +1,6 @@
+"""
+    Authors: Andamlak Terkik, Kevin Carbone
+"""
 import numpy as np
 import os
 

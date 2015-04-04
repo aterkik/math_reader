@@ -1,3 +1,6 @@
+"""
+    Authors: Kevin Carbone, Andamlak Terkik
+"""
 from datautils import *
 from utils import create_dir
 import numpy as np

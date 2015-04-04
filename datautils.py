@@ -1,3 +1,6 @@
+"""
+    Authors: Kevin Carbone, Andamlak Terkik
+"""
 from inkmlreader import inkML
 import numpy as np
 from collections import defaultdict

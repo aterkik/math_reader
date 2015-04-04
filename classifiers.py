@@ -1,3 +1,6 @@
+"""
+    Authors: Andamlak Terkik, Kevin Carbone.
+"""
 import sys
 import os
 import click
@@ -107,7 +110,7 @@ def main(inputdir, outputdir, nnr, inputs):
     generate_lgs(test_inkmls, outputdir)
 
     success = np.sum(preds == test_Y)
-    print("Classification rate: %d%%" % (success*100/float(preds.shape[0])))
+    print("Classification rate: %.2f%%" % (success*100.0/float(preds.shape[0])))
 
 
 def generate_lgs(inkmls, path):

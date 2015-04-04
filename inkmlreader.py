@@ -1,3 +1,6 @@
+"""
+    Authors: Andamlak Terkik, Kevin Carbone
+"""
 import xml.etree.ElementTree as ET
 import numpy as np
 import matplotlib.pyplot as plt
