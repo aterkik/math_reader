@@ -49,7 +49,11 @@ class inkML(object):
         # same symbol are grouped together.
         # E.g. in [[stroke1, stroke2], [stroke3] ...] stroke1 & stroke2 make
         # one symbol and stroke3 is makes a different symbol
-        self.root, self.stroke_groups = self._parse_inkml(fd.read(), fname)
+        try:
+            self.root, self.stroke_groups = self._parse_inkml(fd.read(), fname)
+        except Exception as e:
+            print("!!! Error parsing inkml file '%s'" % fname)
+            print("Details: %s" % e)
         self.stroke_groups = sorted(self.stroke_groups, key=lambda grp: grp.strokes[0].id)
         self.src = fname
 
@@ -105,7 +109,7 @@ class inkML(object):
             # TODO: inefficent loop!
             for trace in traces:
                 if trace.attrib['id'] in trids:
-                    stroke = Stroke(trace.text.strip().replace(",","").split(' '), trace.attrib['id'])
+                    stroke = Stroke(trace.text.strip(), trace.attrib['id'])
                     grp.append(stroke)
             stroke_partition.append(StrokeGroup(grp, annot_id, ground_truth))
         return (root, stroke_partition)
@@ -294,10 +298,16 @@ class StrokeGroup(object):
 
 class Stroke(object):
     def __init__(self, coords, id):
-        self.id = int(id)
-        xcol = np.array([np.array(coords[0::2]).astype(np.float)])
-        ycol = np.array([np.array(coords[1::2]).astype(np.float)])
+        if len(coords.strip().split(",")[0].split()) > 2:
+            coords = coords.replace(",","").split(' ')
+            xcol = np.array([np.array(coords[0::3]).astype(np.float)])
+            ycol = np.array([np.array(coords[1::3]).astype(np.float)])
+        else:
+            coords = coords.replace(",","").split(' ')
+            xcol = np.array([np.array(coords[0::2]).astype(np.float)])
+            ycol = np.array([np.array(coords[1::2]).astype(np.float)])
 
+        self.id = int(id)
         self.raw_coords = coords
         self.coords = np.vstack([xcol,ycol]).T
         self.rcoords = np.vstack([xcol,ycol]).T

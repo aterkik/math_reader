@@ -13,7 +13,7 @@ TRAIN_FNAME_SRC = 'AllEM_part4_TRAIN_all.txt'
 
 VERBOSE = True
 # For development, limit dataset size (make negative to surpass any limit)
-MAX_FILES = 200
+MAX_FILES = 1200
 
 def load_dataset():
     # How it works:
@@ -33,17 +33,24 @@ def load_dataset():
 
 def get_inkml_objects(inkml_file_names, prefix=TRAIN_PATH):
     inkmls = []
+    skipped = 0
     for i, fname in enumerate(inkml_file_names):
         # MfrDB files have three coordinates. Skip for now
-        if 'MfrDB' in fname:
-            continue
+        #if 'MfrDB' in fname:
+        #    continue
 
-        inkml = inkML(prefix + fname)
+        try:
+            inkml = inkML(prefix + fname)
+        except:
+            # skip malformed inkmls
+            skipped += 1
+            continue
         inkml.preprocess()
         inkmls.append(inkml)
 
         if i >= MAX_FILES and MAX_FILES >= 0:
             break
+    print("Total skipped files: %d" % skipped)
     return inkmls
 
 
