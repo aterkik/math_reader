@@ -28,21 +28,25 @@ def get_train_test_split(test_fraction=TEST_FRACTION):
     train_X, train_Y = train_data[:,:-1], train_data[:,-1]
     train_data = np.column_stack((train_X, train_Y))
 
-    return train_data, test_inkmls
+    return train_data, (train_inkmls, test_inkmls)
 
 def main():
     if '--bonus' in sys.argv:
         # For bonus round, train using all data
-        train_data, test_inkmls = get_train_test_split(test_fraction=0)
-        train_dir = 'train'
-        train_dir = 'bonus_train'
+        train_data, (_, test_inkmls) = get_train_test_split(test_fraction=0)
+        train_dir = 'bonus_params'
     else:
-        train_data, test_inkmls = get_train_test_split()
-        train_dir = 'train'
+        train_data, (train_inkmls, test_inkmls) = get_train_test_split()
+        train_dir = 'params'
         # Save test files
-        create_dir('test')
+        create_dir('test_fold')
         for inkml in test_inkmls:
-            shutil.copy2(inkml.src, 'test/' + os.path.basename(inkml.src))
+            shutil.copy2(inkml.src, 'test_fold/' + os.path.basename(inkml.src))
+
+        # Save train files
+        create_dir('train_fold')
+        for inkml in train_inkmls:
+            shutil.copy2(inkml.src, 'train_fold/' + os.path.basename(inkml.src))
 
     X, Y = train_data[:,:-1], train_data[:,-1]
     rbf_svc = svm.SVC(kernel='linear')
@@ -55,8 +59,8 @@ def main():
 
 
 def load_testset_inkmls():
-    fnames = filter(lambda f: 'inkml' in f, os.listdir('test'))
-    return get_inkml_objects(fnames, prefix='test/')
+    fnames = filter(lambda f: 'inkml' in f, os.listdir('test_fold'))
+    return get_inkml_objects(fnames, prefix='test_fold/')
 
 
 if __name__ == '__main__':

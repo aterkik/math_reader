@@ -3,6 +3,7 @@
 """
 import numpy as np
 import os
+import shutil
 
 class Line(object):
     def __init__(self, m=None, b=None, x=None):

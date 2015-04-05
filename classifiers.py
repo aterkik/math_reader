@@ -8,7 +8,7 @@ import numpy as np
 from sklearn.externals import joblib
 from sklearn import preprocessing
 from datautils import *
-from train_classifiers import load_testset_inkmls, get_train_test_split
+from train_classifiers import load_testset_inkmls
 from utils import create_dir
 
 
@@ -62,9 +62,9 @@ def main(inputdir, outputdir, nnr, bonus, inputs):
     if inputs:
         file_names.extend(inputs)
 
-    train_dir = 'train/'
+    train_dir = 'params/'
     if bonus:
-        train_dir = 'bonus_train/'
+        train_dir = 'bonus_params/'
         print("Bonus round...")
 
     if nnr:
