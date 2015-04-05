@@ -213,18 +213,25 @@ class StrokeGroup(object):
         distances = []
         curv_means = []
         curv_vars = []
+        slope_means = []
+        slope_vars = []
         npoints = []
         for stroke in self.strokes:
 
             angles = stroke._angle_feature()
             dist = stroke._norm_line_length()
             curves = stroke._curvature()
+            slopes = stroke._slope()
+
             if len(angles) != 0:
                 angle_means.append(np.mean(angles))
                 angle_vars.append(np.var(angles))
             if len(curves) != 0:
                 curv_means.append(np.mean(curves))
                 curv_vars.append(np.var(curves))
+            if len(slopes) != 0:
+                slope_means.append(np.mean(slopes))
+                slope_vars.append(np.var(slopes))
             if len(dist) != 0:
                 distances.append(np.sum(dist))
             npoints.append(len(stroke.coords.T))
@@ -235,9 +242,12 @@ class StrokeGroup(object):
         if len(curv_means) == 0:
             curv_means = [-99]
             curv_vars = [-99]
+        if len(slope_means) == 0:
+            slope_means = [-99]
+            slope_vars = [-99]
         if len(distances) == 0:
             distances = [-99]
-        return [np.mean(angle_means),np.mean(angle_vars),np.sum(distances),np.mean(curv_means),np.mean(curv_vars),np.sum(npoints)]
+        return [np.mean(angle_means),np.mean(angle_vars),np.sum(distances),np.mean(curv_means),np.mean(curv_vars)]
 
 
     def _get_line_length(self):
@@ -339,7 +349,11 @@ class Stroke(object):
             curves.append(curve(self.coords.T[i-2],self.coords.T[i],self.coords.T[i+2]))
         return np.array(curves)
 
-
+    def _slope(self):
+        slopes = []
+        for i,row in enumerate(self.coords.T[2:]):
+            slopes.append(slope(self.coords.T[i-2],self.coords.T[i+2]))
+        return np.array(slopes)
 
     def __unicode__(self):
         return "<Stroke (id=%s)>" % self.id
@@ -444,7 +458,16 @@ def curve(p1,p2,p3):
         return -99
     res = (a**2 + b**2 - c**2) / (2*a*b)
     angleC = np.arccos(round(res))
+    return angleC
 
+def slope(p1,p2):
+    a = distance(p1,p2)
+    c = -1
+    mag = (np.linalg.norm(a))
+    if mag == 0:
+        return -99
+    unit = (a/mag)
+    angleC = np.arccos(c/unit)
     return angleC
 
 
