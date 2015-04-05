@@ -56,12 +56,16 @@ def run_nearest_nbr1(train_data, test_data):
 def main(inputdir, outputdir, nnr, bonus, inputs):
     file_names = []
     if inputdir:
+        inputdir = inputdir + '/' if not inputdir.endswith('/') else inputdir
         file_names = filter(lambda f: f.endswith('.inkml'), os.listdir(inputdir))
         file_names = map(lambda f: inputdir + f, file_names)
     if inputs:
         file_names.extend(inputs)
 
-    train_dir = 'train/' if not bonus else 'bonus_train/'
+    train_dir = 'train/'
+    if bonus:
+        train_dir = 'bonus_train/'
+        print("Bonus round...")
 
     if nnr:
         try:
@@ -117,6 +121,7 @@ def main(inputdir, outputdir, nnr, bonus, inputs):
 
 def generate_lgs(inkmls, path):
     create_dir(path)
+    path = path + '/' if not path.endswith('/') else path
     for inkml in inkmls:
         fname = inkml.src.rstrip('inkml') + "lg"
         fname = path + os.path.basename(fname)
