@@ -24,7 +24,7 @@ def get_train_test_split(test_fraction=TEST_FRACTION):
     train_inkmls, test_inkmls = split_dataset(inkmls, test_fraction)
     print("Loading train data...")
     train_data, _ = inkmls_to_feature_matrix(train_inkmls)
-    
+
     train_X, train_Y = train_data[:,:-1], train_data[:,-1]
     train_data = np.column_stack((train_X, train_Y))
 
@@ -49,7 +49,7 @@ def main():
             shutil.copy2(inkml.src, 'train_fold/' + os.path.basename(inkml.src))
 
     X, Y = train_data[:,:-1], train_data[:,-1]
-    rbf_svc = svm.SVC(kernel='linear')
+    rbf_svc = svm.SVC(kernel='linear', cache_size=4000)
     rbf_svc.fit(X, Y)
 
     create_dir(train_dir)
