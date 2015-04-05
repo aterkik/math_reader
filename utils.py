@@ -65,7 +65,13 @@ def generate_subcrossings(start, end, k, direction='vert'):
             lines.append(Line(m=0, b=i))
     return lines
 
+def empty_dir(path):
+    try:
+        shutil.rmtree(path)
+    except:
+        pass
+
 def create_dir(path):
+    empty_dir(path)
     if not os.path.exists(path):
         os.makedirs(path)
-

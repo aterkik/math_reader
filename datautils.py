@@ -13,7 +13,7 @@ TRAIN_FNAME_SRC = 'AllEM_part4_TRAIN_all.txt'
 
 VERBOSE = True
 # For development, limit dataset size (make negative to surpass any limit)
-MAX_FILES = 1200
+MAX_FILES = 200
 
 def load_dataset():
     # How it works:

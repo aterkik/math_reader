@@ -51,8 +51,9 @@ def run_nearest_nbr1(train_data, test_data):
 @click.option('--inputdir', default='', help='Input directory containing .inkml files')
 @click.option('--outputdir', default='LG_output/', help='Output directory where .lg files are generated into')
 @click.option('--nnr', is_flag=True, help='Use 1-NN Classifier')
+@click.option('--bonus', is_flag=True, help='Run bonus round')
 @click.argument('inputs', nargs=-1)
-def main(inputdir, outputdir, nnr, inputs):
+def main(inputdir, outputdir, nnr, bonus, inputs):
     file_names = []
     if inputdir:
         file_names = filter(lambda f: f.endswith('.inkml'), os.listdir(inputdir))
@@ -60,10 +61,11 @@ def main(inputdir, outputdir, nnr, inputs):
     if inputs:
         file_names.extend(inputs)
 
-    if nnr:
+    train_dir = 'train/' if not bonus else 'bonus_train/'
 
+    if nnr:
         try:
-            train_data = np.load('train/1nnr.npy')
+            train_data = np.load(train_dir + '1nnr.npy')
         except:
             print("!!! Error: couldn't load parameter file")
             print("!!! Try running './train_classifiers.py' first")
@@ -93,7 +95,7 @@ def main(inputdir, outputdir, nnr, inputs):
         test_X, test_Y = test_data[:,:-1], test_data[:,-1]
 
         try:
-            svm = joblib.load('train/svc.pkl')
+            svm = joblib.load(train_dir + 'svc.pkl')
         except:
             print("!!! Error: couldn't load parameter file")
             print("!!! Try running './train_classifiers.py' first")
