@@ -1,7 +1,5 @@
 ## Handwritten Math Symbol Classification
 
-    
-
     python classifiers.py [--inputdir=/path/] [--outputdir=/path/] [--nnr] [--bonus]
 
 ## Options
@@ -45,5 +43,9 @@
             Saves the parameter files in bonus_train/ directory.
             
 
+## Installation
+After installing Python 3, run:
+
+        pip install -r requirements.txt
 
 Authors: Andamlak Terkik, Kevin Carbone
