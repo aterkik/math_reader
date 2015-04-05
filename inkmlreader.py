@@ -199,9 +199,13 @@ class StrokeGroup(object):
             aspect_ratio = float(line_len[0])
 
         all_coords = self.get_coords()
+        cov = self.get_cov(all_coords)
         mean_xy = all_coords.sum(axis=0) / float(all_coords.shape[0])
         # TODO: remaining: angular change, sharp points, covariances
-        return [n_traces, aspect_ratio] + line_len + mean_xy.tolist()
+        return [n_traces, aspect_ratio, cov] + line_len + mean_xy.tolist()
+
+    def get_cov(self, coords):
+        return np.cov(coords.T)[0,1]
 
     def get_extra_features(self):
         angle_means = []
