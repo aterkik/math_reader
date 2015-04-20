@@ -73,6 +73,9 @@ class inkML(object):
     def get_lg(self):
         outs = []
         for grp in self.stroke_groups:
+            if ',' in grp.prediction:
+                grp.prediction = "COMMA"
+            #pr = '\,' if grp.prediction == ',' else grp.prediction
             outs.append("O, %s, %s, 1.0, %s" % (
                         grp.annot_id, grp.prediction, grp.strk_ids()))
         out = "\n".join(outs)
@@ -103,7 +106,8 @@ class inkML(object):
             except:
                 print("!! Warning: couldn't find annotationXML for tracegroup"
                       " in file %s" % fname)
-                annot_id = "S_" + str(i)
+                raise Exception()
+                annot_id = "u_" + str(i)
 
             grp = []
             # TODO: inefficent loop!
@@ -200,9 +204,10 @@ class StrokeGroup(object):
 
         all_coords = self.get_coords()
         cov = self.get_cov(all_coords)
+        #TODO: not actually using covariance feature...
         mean_xy = all_coords.sum(axis=0) / float(all_coords.shape[0])
         # TODO: remaining: angular change, sharp points, covariances
-        return [n_traces, aspect_ratio, cov] + line_len + mean_xy.tolist()
+        return [n_traces, aspect_ratio] + line_len + mean_xy.tolist()
 
     def get_cov(self, coords):
         return np.cov(coords.T)[0,1]
