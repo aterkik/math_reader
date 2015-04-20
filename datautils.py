@@ -15,7 +15,7 @@ VERBOSE = True
 # For development, limit dataset size (make negative to surpass any limit)
 MAX_FILES = 200
 
-def load_dataset():
+def load_dataset(read_segmentation=True):
     # How it works:
     # Reads list of inkml files
     # Parses inkml files and target outputs
@@ -29,9 +29,9 @@ def load_dataset():
         import sys
         sys.exit(1)
 
-    return get_inkml_objects(inkml_file_names)
+    return get_inkml_objects(inkml_file_names, read_segmentation)
 
-def get_inkml_objects(inkml_file_names, prefix=TRAIN_PATH):
+def get_inkml_objects(inkml_file_names, prefix=TRAIN_PATH, segmented=False):
     inkmls = []
     skipped = 0
     for i, fname in enumerate(inkml_file_names):
@@ -40,7 +40,7 @@ def get_inkml_objects(inkml_file_names, prefix=TRAIN_PATH):
         #    continue
 
         try:
-            inkml = inkML(prefix + fname)
+            inkml = inkML(prefix + fname, segmented)
         except:
             # skip malformed inkmls
             skipped += 1
