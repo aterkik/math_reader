@@ -31,6 +31,12 @@ def get_train_test_split(test_fraction=TEST_FRACTION):
     return train_data, (train_inkmls, test_inkmls)
 
 def main():
+    """
+        Need to keep track of training inkmls so we can calculate
+        training accuracy. The same goes for testing inkmls.
+        We also save learned params for our main classifier and
+        numpy features array for 1-NN classifier.
+    """
     if '--bonus' in sys.argv:
         # For bonus round, train using all data
         train_data, (_, test_inkmls) = get_train_test_split(test_fraction=0)
