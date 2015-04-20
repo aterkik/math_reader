@@ -44,8 +44,47 @@ def run_nearest_nbr1(train_data, test_data):
         results.append(y_prime)
 
     return np.array(results)
+
+def nnr_runner(train_dir, test_inkmls):
+    try:
+        train_data = np.load(train_dir + '1nnr.npy')
+    except:
+        print("!!! Error: couldn't load parameter file")
+        print("!!! Try running './train_classifiers.py' first")
+        sys.exit(1)
+
+    print("Generating features for test data...")
+    test_data, strk_grps = inkmls_to_feature_matrix(test_inkmls)
+    test_X, test_Y = test_data[:,:-1], test_data[:,-1]
+    print("Running 1-NN Nearest Neighbor...")
+    preds = run_nearest_nbr1(train_data, test_X)
+    return (preds, strk_grps, test_Y)
+
 ###### End Nearest Neighbor ###########
 
+def svm_runner(train_dir, test_inkmls):
+    print("Generating features for test data...")
+    test_data, strk_grps = inkmls_to_feature_matrix(test_inkmls)
+    test_X, test_Y = test_data[:,:-1], test_data[:,-1]
+
+    try:
+        svm = joblib.load(train_dir + 'svc.pkl')
+    except:
+        print("!!! Error: couldn't load parameter file")
+        print("!!! Try running './train_classifiers.py' first")
+        sys.exit(1)
+
+    print("Running SVM...")
+    preds = run_svm(svm, test_X)
+    return (preds, strk_grps, test_Y)
+
+def generate_lgs(inkmls, path):
+    create_dir(path)
+    path = path + '/' if not path.endswith('/') else path
+    for inkml in inkmls:
+        fname = inkml.src.rstrip('inkml') + "lg"
+        fname = path + os.path.basename(fname)
+        open(fname, 'w+').write(inkml.get_lg())
 
 @click.command()
 @click.option('--inputdir', default='', help='Input directory containing .inkml files')
@@ -67,47 +106,18 @@ def main(inputdir, outputdir, nnr, bonus, inputs):
         train_dir = 'bonus_params/'
         print("Bonus round...")
 
+    if file_names:
+        test_inkmls = get_inkml_objects(file_names, prefix='')
+    else:
+        print("Using hold-out set for test data (not user-supplied)...")
+        test_inkmls = load_testset_inkmls()
+
     if nnr:
-        try:
-            train_data = np.load(train_dir + '1nnr.npy')
-        except:
-            print("!!! Error: couldn't load parameter file")
-            print("!!! Try running './train_classifiers.py' first")
-            sys.exit(1)
-
-        if file_names:
-            test_inkmls = get_inkml_objects(file_names, prefix='')
-        else:
-            print("Using hold-out set for test data (not user-supplied)...")
-            test_inkmls = load_testset_inkmls()
-
-        print("Generating features for test data...")
-        test_data, strk_grps = inkmls_to_feature_matrix(test_inkmls)
-        test_X, test_Y = test_data[:,:-1], test_data[:,-1]
-        print("Running 1-NN Nearest Neighbor...")
-        preds = run_nearest_nbr1(train_data, test_X)
+        (preds, strk_grps, test_Y) = nnr_runner(train_dir, test_inkmls)
     else:
         # Assume SVM by default
-        if file_names:
-            test_inkmls = get_inkml_objects(file_names, prefix='')
-        else:
-            print("Using hold-out set for test data (not user-supplied)...")
-            test_inkmls = load_testset_inkmls()
-
-        print("Generating features for test data...")
-        test_data, strk_grps = inkmls_to_feature_matrix(test_inkmls)
-        test_X, test_Y = test_data[:,:-1], test_data[:,-1]
-
-        try:
-            svm = joblib.load(train_dir + 'svc.pkl')
-        except:
-            print("!!! Error: couldn't load parameter file")
-            print("!!! Try running './train_classifiers.py' first")
-            sys.exit(1)
-
-        print("Running SVM...")
-        preds = run_svm(svm, test_X)
-
+        (preds, strk_grps, test_Y) = svm_runner(train_dir, test_inkmls)
+        
     for i, pred in enumerate(preds):
         strk_grps[i].prediction = pred
 
@@ -117,15 +127,6 @@ def main(inputdir, outputdir, nnr, bonus, inputs):
 
     success = np.sum(preds == test_Y)
     print("Classification rate: %.2f%%" % (success*100.0/float(preds.shape[0])))
-
-
-def generate_lgs(inkmls, path):
-    create_dir(path)
-    path = path + '/' if not path.endswith('/') else path
-    for inkml in inkmls:
-        fname = inkml.src.rstrip('inkml') + "lg"
-        fname = path + os.path.basename(fname)
-        open(fname, 'w+').write(inkml.get_lg())
 
 
 if __name__ == '__main__':
