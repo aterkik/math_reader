@@ -8,7 +8,7 @@ import numpy as np
 from sklearn.externals import joblib
 from sklearn import preprocessing
 from datautils import *
-from train_classifiers import load_testset_inkmls
+from train_classifiers import load_testset_inkmls, TEST_FOLD_DIR
 from utils import create_dir
 
 
@@ -55,17 +55,17 @@ def nnr_runner(train_dir, test_inkmls):
 
     print("Generating features for test data...")
     test_data, strk_grps = inkmls_to_feature_matrix(test_inkmls)
-    test_X, test_Y = test_data[:,:-1], test_data[:,-1]
+    test_X, _ = test_data[:,:-1], test_data[:,-1]
     print("Running 1-NN Nearest Neighbor...")
     preds = run_nearest_nbr1(train_data, test_X)
-    return (preds, strk_grps, test_Y)
+    return (preds, strk_grps)
 
 ###### End Nearest Neighbor ###########
 
 def svm_runner(train_dir, test_inkmls):
     print("Generating features for test data...")
     test_data, strk_grps = inkmls_to_feature_matrix(test_inkmls)
-    test_X, test_Y = test_data[:,:-1], test_data[:,-1]
+    test_X, _ = test_data[:,:-1], test_data[:,-1]
 
     try:
         svm = joblib.load(train_dir + 'svc.pkl')
@@ -76,7 +76,7 @@ def svm_runner(train_dir, test_inkmls):
 
     print("Running SVM...")
     preds = run_svm(svm, test_X)
-    return (preds, strk_grps, test_Y)
+    return (preds, strk_grps)
 
 def generate_lgs(inkmls, path):
     create_dir(path)
@@ -111,12 +111,13 @@ def main(inputdir, outputdir, nnr, bonus, inputs):
     else:
         print("Using hold-out set for test data (not user-supplied)...")
         test_inkmls = load_testset_inkmls()
+        inputdir = TEST_FOLD_DIR
 
+    segment_inkmls(test_inkmls)
     if nnr:
-        (preds, strk_grps, test_Y) = nnr_runner(train_dir, test_inkmls)
+        (preds, strk_grps) = nnr_runner(train_dir, test_inkmls)
     else:
-        # Assume SVM by default
-        (preds, strk_grps, test_Y) = svm_runner(train_dir, test_inkmls)
+        (preds, strk_grps) = svm_runner(train_dir, test_inkmls)
         
     for i, pred in enumerate(preds):
         strk_grps[i].prediction = pred
@@ -124,9 +125,9 @@ def main(inputdir, outputdir, nnr, bonus, inputs):
     # Now that predictions are embedded in the objects, we can generate
     # label graphs
     generate_lgs(test_inkmls, outputdir)
-
-    success = np.sum(preds == test_Y)
-    print("Classification rate: %.2f%%" % (success*100.0/float(preds.shape[0])))
+    os.system("python batch2lg.py '%s'" % inputdir)
+    os.system("evaluate '%s' '%s'" % (outputdir, inputdir))
+    os.system("cat 'Results_%sSummary.txt'" % outputdir)
 
 
 if __name__ == '__main__':

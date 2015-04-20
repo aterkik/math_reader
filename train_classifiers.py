@@ -15,12 +15,14 @@ import shutil
 # output parma file name
 
 TEST_FRACTION = 1.0/3.0
+TEST_FOLD_DIR = "test_fold"
 
 
 def get_train_test_split(test_fraction=TEST_FRACTION):
     """Returns feature vectors for training data and InkML objects
     for test set"""
     inkmls = load_dataset()
+    segment_inkmls_ground_truth(inkmls)
     train_inkmls, test_inkmls = split_dataset(inkmls, test_fraction)
     print("Loading train data...")
     train_data, _ = inkmls_to_feature_matrix(train_inkmls)
@@ -65,8 +67,8 @@ def main():
 
 
 def load_testset_inkmls():
-    fnames = filter(lambda f: 'inkml' in f, os.listdir('test_fold'))
-    return get_inkml_objects(fnames, prefix='test_fold/')
+    fnames = filter(lambda f: 'inkml' in f, os.listdir(TEST_FOLD_DIR))
+    return get_inkml_objects(fnames, prefix=TEST_FOLD_DIR + "/")
 
 
 if __name__ == '__main__':

@@ -8,7 +8,8 @@ def baseline_segmenter(strokes, kind='baseline'):
     elif False:
         pass
     else:
-        print("!!! Error: unknown segmneter '%s'" % kind)
+        print("!!! Error: unknown segmenter '%s'" % kind)
     return partition
+
 
 segment = baseline_segmenter

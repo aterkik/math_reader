@@ -15,7 +15,7 @@ VERBOSE = True
 # For development, limit dataset size (make negative to surpass any limit)
 MAX_FILES = 200
 
-def load_dataset(read_segmentation=True):
+def load_dataset():
     # How it works:
     # Reads list of inkml files
     # Parses inkml files and target outputs
@@ -29,9 +29,9 @@ def load_dataset(read_segmentation=True):
         import sys
         sys.exit(1)
 
-    return get_inkml_objects(inkml_file_names, read_segmentation)
+    return get_inkml_objects(inkml_file_names)
 
-def get_inkml_objects(inkml_file_names, prefix=TRAIN_PATH, segmented=False):
+def get_inkml_objects(inkml_file_names, prefix=TRAIN_PATH):
     inkmls = []
     skipped = 0
     for i, fname in enumerate(inkml_file_names):
@@ -40,12 +40,11 @@ def get_inkml_objects(inkml_file_names, prefix=TRAIN_PATH, segmented=False):
         #    continue
 
         try:
-            inkml = inkML(prefix + fname, segmented)
+            inkml = inkML(prefix + fname)
         except:
             # skip malformed inkmls
             skipped += 1
             continue
-        inkml.preprocess()
         inkmls.append(inkml)
 
         if i >= MAX_FILES and MAX_FILES >= 0:
@@ -165,6 +164,16 @@ def random_select_by_count(inkmls, symbol, count):
     random.shuffle(inkmls)
 
     return inkmls[:idx], inkmls[idx:]
+
+def segment_inkmls(inkmls):
+    for inkml in inkmls:
+        inkml.parse(from_ground_truth=False)
+        inkml.preprocess()
+
+def segment_inkmls_ground_truth(inkmls):
+    for inkml in inkmls:
+        inkml.parse(from_ground_truth=True)
+        inkml.preprocess()
 
 
 ########## End utility functions ##############

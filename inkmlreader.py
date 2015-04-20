@@ -39,9 +39,15 @@ def round_nearest(data,step=1):
     return data
 
 class inkML(object):
-    def __init__(self, fname, segmented=False):
+    def __init__(self, fname):
+        self.fname = fname
+        self.root = None
+        self.src = None #TODO: this is redundant, see self.fname.
+        self.stroke_groups = None
+    
+    def parse(self, from_ground_truth=False):
         try:
-            fd = open(fname)
+            fd = open(self.fname)
         except Exception as e:
             raise e
 
@@ -50,16 +56,18 @@ class inkML(object):
         # E.g. in [[stroke1, stroke2], [stroke3] ...] stroke1 & stroke2 make
         # one symbol and stroke3 is makes a different symbol
         try:
-            if segmented:
-                self.root, self.stroke_groups = self._parse_inkml(fd.read(), fname)
+            if from_ground_truth:
+                self.root, self.stroke_groups = self._parse_inkml(fd.read(), self.fname)
             else:
-                self.root, self.stroke_groups = self._parse_inkml_unsegmented(fd.read(), fname)
+                self.root, self.stroke_groups = self._parse_inkml_unsegmented(fd.read(), self.fname)
 
         except Exception as e:
-            print("!!! Error parsing inkml file '%s'" % fname)
+            print("!!! Error parsing inkml file '%s'" % self.fname)
             print("Details: %s" % e)
+        finally:
+            fd.close()
         self.stroke_groups = sorted(self.stroke_groups, key=lambda grp: grp.strokes[0].id)
-        self.src = fname
+        self.src = self.fname
 
     def preprocess(self):
         for strk_grp in self.stroke_groups:
