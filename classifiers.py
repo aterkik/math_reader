@@ -10,6 +10,7 @@ from sklearn import preprocessing
 from datautils import *
 from train_classifiers import load_testset_inkmls, TEST_FOLD_DIR
 from utils import create_dir
+from settings import *
 
 
 ############# SVM Classifier ##################
@@ -49,7 +50,7 @@ def nnr_runner(train_dir, test_inkmls):
     try:
         train_data = np.load(train_dir + '1nnr.npy')
     except:
-        print("!!! Error: couldn't load parameter file")
+        print("!!! Error: couldn't load parameter file for symbol classification")
         print("!!! Try running './train_classifiers.py' first")
         sys.exit(1)
 
@@ -68,14 +69,17 @@ def svm_runner(train_dir, test_inkmls):
     test_X, _ = test_data[:,:-1], test_data[:,-1]
 
     try:
-        svm = joblib.load(train_dir + 'svc.pkl')
-    except:
-        print("!!! Error: couldn't load parameter file")
+        svm = joblib.load(train_dir + 'classification-svc.pkl')
+    except Exception as e:
+        print("!!! Error: couldn't load parameter file for classification")
         print("!!! Try running './train_classifiers.py' first")
+        print("!!! Details: '%s'" % e)
         sys.exit(1)
 
     print("Running SVM...")
     preds = run_svm(svm, test_X)
+    print("Done.")
+
     return (preds, strk_grps)
 
 def generate_lgs(inkmls, path):
@@ -101,9 +105,9 @@ def main(inputdir, outputdir, nnr, bonus, inputs):
     if inputs:
         file_names.extend(inputs)
 
-    train_dir = 'params/'
+    train_dir = PARAMS_DIR
     if bonus:
-        train_dir = 'bonus_params/'
+        train_dir = BONUS_PARAMS_DIR
         print("Bonus round...")
 
     if file_names:

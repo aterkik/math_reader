@@ -14,8 +14,6 @@ import shutil
 # what percentage to split (e.g. it's different for project vs bonus)
 # output parma file name
 
-TEST_FRACTION = 1.0/3.0
-TEST_FOLD_DIR = "test_fold"
 
 
 def get_train_test_split(test_fraction=TEST_FRACTION):
@@ -56,6 +54,7 @@ def main():
     train_data, _ = inkmls_to_feature_matrix(train_inkmls)
     train_X, train_Y = train_data[:,:-1], train_data[:,-1]
     rbf_svc = svm.SVC(kernel='linear', cache_size=4000)
+    print("Training classification...")
     rbf_svc.fit(train_X, train_Y)
 
     create_dir(train_dir)
@@ -67,6 +66,7 @@ def main():
     train_data = inkmls_to_segmentation_feature_matrix(train_inkmls)
     train_X, train_Y = train_data[:,:-1], train_data[:,-1]
     rbf_svc = svm.SVC(kernel='linear', cache_size=4000)
+    print("Training segmentation...")
     rbf_svc.fit(train_X, train_Y)
 
     joblib.dump(rbf_svc, train_dir + '/segmentation-svc.pkl')
@@ -75,7 +75,8 @@ def main():
 
 def load_testset_inkmls():
     fnames = filter(lambda f: 'inkml' in f, os.listdir(TEST_FOLD_DIR))
-    return get_inkml_objects(fnames, prefix=TEST_FOLD_DIR + "/")
+    path = TEST_FOLD_DIR if TEST_FOLD_DIR.endswith("/") else TEST_FOLD_DIR + "/"
+    return get_inkml_objects(fnames, prefix=path)
 
 
 if __name__ == '__main__':

@@ -39,7 +39,7 @@ def round_nearest(data,step=1):
     return data
 
 class inkML(object):
-    segmenter = None
+    segmenter = Segmenter()
     def __init__(self, fname):
         self.fname = fname
         self.root = None
@@ -97,11 +97,6 @@ class inkML(object):
 
     @staticmethod
     def _parse_inkml_unsegmented(inkml_data, fname, segmenter_kind='baseline'):
-        # If segmenter is not initialized, train first
-        if self.segmenter is None:
-            self.segmenter = Segmenter()
-            self.segmenter.train()
-
         root = ET.fromstring(inkml_data)
         np = root.tag.rstrip('ink') # get namespace, bad hack!
 
@@ -112,9 +107,9 @@ class inkML(object):
             strokes.append(stroke)
 
         if segmenter_kind == 'baseline':
-            partition = self.segmenter.baseline_segmenter(strokes)
+            partition = inkML.segmenter.baseline_segmenter(strokes)
         else:
-            partition = self.segmenter.main_segmenter(strokes)
+            partition = inkML.segmenter.main_segmenter(strokes)
 
         return (root, partition)
 

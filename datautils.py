@@ -4,16 +4,11 @@
 from inkmlreader import inkML
 import numpy as np
 from collections import defaultdict
+from settings import *
 import operator
 import random
 
 ######## Utility functions ################
-TRAIN_PATH = 'TrainINKML_v3/'
-TRAIN_FNAME_SRC = 'AllEM_part4_TRAIN_all.txt'
-
-VERBOSE = True
-# For development, limit dataset size (make negative to surpass any limit)
-MAX_FILES = 200
 
 def load_dataset():
     # How it works:
@@ -106,7 +101,7 @@ def _segment_features(stroke_groups):
     return data
 
 def _feature_for_stroke_pair(strk_pair):
-    return [strk_pair[0].id, strk_pair[1].id]
+    return [int(strk_pair[0].id), int(strk_pair[1].id)]
 
 
 
