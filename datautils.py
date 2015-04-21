@@ -76,6 +76,39 @@ def inkmls_to_feature_matrix(inkmls):
             print("....%.2f%% complete (generating features)" % (100 * float(i)/total))
     return data, symbols
 
+def inkmls_to_segmentation_feature_matrix(inkmls):
+    data = np.array([])
+    for inkml in inkmls:
+        pairs_features = _segment_features(inkml.stroke_groups)
+        if data.shape[0] == 0:
+            data = np.array(pairs_features)
+        else:
+            data = np.vstack((data, pairs_features))
+
+    return data
+
+def _segment_features(stroke_groups):
+    data = np.array([])
+    strokes = [strk for grp in stroke_groups for strk in grp.strokes]
+    stroke_pairs = zip(strokes, strokes[1::])
+    for pair in stroke_pairs:
+        decision = 'split'
+        for grp in stroke_groups:
+            if pair[0] in grp.strokes and pair[1] in grp.strokes:
+                decision = 'merge'
+                break
+
+        features = _feature_for_stroke_pair(pair)
+        if data.shape[0] == 0:
+            data = np.array(features + [decision])
+        else:
+            data = np.vstack((data, features + [decision]))
+    return data
+
+def _feature_for_stroke_pair(strk_pair):
+    return [strk_pair[0].id, strk_pair[1].id]
+
+
 
 def split_dataset(inkmls, test_percentage):
     """Splits (randomly!) dataset into training and test.

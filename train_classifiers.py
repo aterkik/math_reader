@@ -24,13 +24,7 @@ def get_train_test_split(test_fraction=TEST_FRACTION):
     inkmls = load_dataset()
     segment_inkmls_ground_truth(inkmls)
     train_inkmls, test_inkmls = split_dataset(inkmls, test_fraction)
-    print("Loading train data...")
-    train_data, _ = inkmls_to_feature_matrix(train_inkmls)
-
-    train_X, train_Y = train_data[:,:-1], train_data[:,-1]
-    train_data = np.column_stack((train_X, train_Y))
-
-    return train_data, (train_inkmls, test_inkmls)
+    return train_inkmls, test_inkmls
 
 def main():
     """
@@ -39,12 +33,13 @@ def main():
         We also save learned params for our main classifier and
         numpy features array for 1-NN classifier.
     """
+
     if '--bonus' in sys.argv:
         # For bonus round, train using all data
-        train_data, (_, test_inkmls) = get_train_test_split(test_fraction=0)
+        train_data, test_inkmls = get_train_test_split(test_fraction=0)
         train_dir = 'bonus_params'
     else:
-        train_data, (train_inkmls, test_inkmls) = get_train_test_split()
+        (train_inkmls, test_inkmls) = get_train_test_split()
         train_dir = 'params'
         # Save test files
         create_dir('test_fold')
@@ -56,13 +51,25 @@ def main():
         for inkml in train_inkmls:
             shutil.copy2(inkml.src, 'train_fold/' + os.path.basename(inkml.src))
 
-    X, Y = train_data[:,:-1], train_data[:,-1]
+    # Symbol classification training
+    print("Loading train data (classification)...")
+    train_data, _ = inkmls_to_feature_matrix(train_inkmls)
+    train_X, train_Y = train_data[:,:-1], train_data[:,-1]
     rbf_svc = svm.SVC(kernel='linear', cache_size=4000)
-    rbf_svc.fit(X, Y)
+    rbf_svc.fit(train_X, train_Y)
 
     create_dir(train_dir)
-    joblib.dump(rbf_svc, train_dir + '/svc.pkl')
+    joblib.dump(rbf_svc, train_dir + '/classification-svc.pkl')
     np.save(train_dir + '/1nnr.npy', train_data)
+
+    # Segmentation training
+    print("Loading train data (segmentation)...")
+    train_data = inkmls_to_segmentation_feature_matrix(train_inkmls)
+    train_X, train_Y = train_data[:,:-1], train_data[:,-1]
+    rbf_svc = svm.SVC(kernel='linear', cache_size=4000)
+    rbf_svc.fit(train_X, train_Y)
+
+    joblib.dump(rbf_svc, train_dir + '/segmentation-svc.pkl')
 
 
 

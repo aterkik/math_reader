@@ -4,7 +4,7 @@
 import xml.etree.ElementTree as ET
 import numpy as np
 from strokedata import Stroke, StrokeGroup
-import segmenter
+from segmenter import Segmenter
 
 """
     Usage:
@@ -39,6 +39,7 @@ def round_nearest(data,step=1):
     return data
 
 class inkML(object):
+    segmenter = None
     def __init__(self, fname):
         self.fname = fname
         self.root = None
@@ -95,7 +96,12 @@ class inkML(object):
         return out
 
     @staticmethod
-    def _parse_inkml_unsegmented(inkml_data, fname):
+    def _parse_inkml_unsegmented(inkml_data, fname, segmenter_kind='baseline'):
+        # If segmenter is not initialized, train first
+        if self.segmenter is None:
+            self.segmenter = Segmenter()
+            self.segmenter.train()
+
         root = ET.fromstring(inkml_data)
         np = root.tag.rstrip('ink') # get namespace, bad hack!
 
@@ -105,7 +111,11 @@ class inkML(object):
             stroke = Stroke(trace.text.strip(), trace.attrib['id'])
             strokes.append(stroke)
 
-        partition = segmenter.segment(strokes, kind='baseline')
+        if segmenter_kind == 'baseline':
+            partition = self.segmenter.baseline_segmenter(strokes)
+        else:
+            partition = self.segmenter.main_segmenter(strokes)
+
         return (root, partition)
 
     @staticmethod

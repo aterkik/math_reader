@@ -1,15 +1,28 @@
 from strokedata import Stroke, StrokeGroup
 
-def baseline_segmenter(strokes, kind='baseline'):
-    partition = []
-    if kind == 'baseline':
-        for i, strk in enumerate(strokes):
-            partition.append(StrokeGroup([strk], 'A_%s' % str(i), ' '))
-    elif False:
+
+class Segmenter(object):
+    def __init__(self):
         pass
-    else:
-        print("!!! Error: unknown segmenter '%s'" % kind)
-    return partition
+
+    def train(self):
+        pass
+
+    def baseline_segmenter(self):
+        partition = []
+        if kind == 'baseline':
+            for i, strk in enumerate(strokes):
+                partition.append(StrokeGroup([strk], 'A_%s' % str(i), ' '))
+        elif False:
+            pass
+        else:
+            print("!!! Error: unrecognized segmenter '%s'" % kind)
+        return partition
+
+    def main_segmenter(self):
+        pass
 
 
-segment = baseline_segmenter
+class SegmenterFeatures(object):
+    pass
+
