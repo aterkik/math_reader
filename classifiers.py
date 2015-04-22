@@ -17,7 +17,7 @@ from settings import *
 def run_svm(svm, test_data):
     results = []
     for idx, row in enumerate(test_data):
-        y_prime = svm.predict(row)[0]
+        y_prime = svm.predict(np.array(row,dtype=float))[0]
         results.append(y_prime)
     return np.array(results)
 
