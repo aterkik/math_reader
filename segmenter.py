@@ -25,9 +25,14 @@ class Segmenter(object):
     def main_segmenter(self):
         if not self.svm:
             self._load_params()
-
         pass
 
 
 class SegmenterFeatures(object):
-    pass
+    @staticmethod
+    def get_features(strk_pair, strk_grps):
+        """Compute all segmentation features for stroke pair (strk_pair)
+        strk_pair: stroke pair
+        strk_grps: the stroke group for the whole expression (including strk_pair)
+        """
+        return [int(strk_pair[0]), int(strk_pair[1])]

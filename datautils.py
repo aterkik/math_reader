@@ -93,16 +93,12 @@ def _segment_features(stroke_groups):
                 decision = 'merge'
                 break
 
-        features = _feature_for_stroke_pair(pair)
+        features = SegmenterFeatures.get_features(pair, stroke_groups)
         if data.shape[0] == 0:
             data = np.array(features + [decision])
         else:
             data = np.vstack((data, features + [decision]))
     return data
-
-def _feature_for_stroke_pair(strk_pair):
-    return [int(strk_pair[0].id), int(strk_pair[1].id)]
-
 
 
 def split_dataset(inkmls, test_percentage):
