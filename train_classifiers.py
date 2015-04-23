@@ -10,6 +10,7 @@ from sklearn import preprocessing
 import sys
 import os
 import shutil
+from sklearn.ensemble import RandomForestClassifier
 
 # what percentage to split (e.g. it's different for project vs bonus)
 # output parma file name
@@ -62,12 +63,12 @@ def main():
     print("Loading train data (classification)...")
     train_data, _ = inkmls_to_feature_matrix(train_inkmls)
     train_X, train_Y = train_data[:,:-1], train_data[:,-1]
-    rbf_svc = svm.SVC(kernel='linear', cache_size=4000)
+    rf = RandomForestClassifier(n_estimators=100, max_depth=10)
     print("Training classification...")
-    rbf_svc.fit(train_X, train_Y)
+    rf.fit(train_X, train_Y)
 
     create_dir(train_dir)
-    joblib.dump(rbf_svc, train_dir + '/classification-svc.pkl')
+    joblib.dump(rf, train_dir + '/classification-rf.pkl')
     np.save(train_dir + '/1nnr.npy', train_data)
 
 

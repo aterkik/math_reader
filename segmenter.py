@@ -7,11 +7,11 @@ from scipy.optimize import curve_fit
 
 class Segmenter(object):
     def __init__(self):
-        self.svm = None
+        self.cls = None
 
     def _load_params(self):
         try:
-            self.svm = joblib.load(PARAMS_DIR + 'segmentation-svc.pkl')
+            self.cls = joblib.load(PARAMS_DIR + 'segmentation-svc.pkl')
         except Exception as e:
             print("!!! Error: couldn't load parameter file for segmenter")
             print("!!! Try running './train_classifiers.py' first")
@@ -25,7 +25,7 @@ class Segmenter(object):
         return partition
 
     def main_segmenter(self):
-        if not self.svm:
+        if not self.cls:
             self._load_params()
         pass
 
@@ -37,13 +37,17 @@ class SegmenterFeatures(object):
         strk_pair: stroke pair
         strk_grps: the stroke group for the whole expression (including strk_pair)
         """
-        bb = BoundingBox(strk_pair[0])
-        parallelity(strk_pair[0],strk_pair[1])
-        return [0, 0]
-        # return [int(strk_pair[0]), int(strk_pair[1])]
+        geo_features = SegmenterFeatures._geometric_features(strk_pair, strk_grps)
+        return geo_features
 
+    @staticmethod
     def _geometric_features(strk_pair, strk_grps):
-        pass
+        stroke1 = strk_pair[0]
+        stroke2 = strk_pair[1]
+        bb1 = BoundingBox(stroke1)
+        bb2 = BoundingBox(stroke2)
+        return [parallelity(stroke1,stroke2), average_distance(stroke1,stroke2), distance_beginning_end(stroke1,stroke2), \
+                min_distance(stroke1,stroke2),bb1.distance(bb2), bb1.overlap_distance2(bb2)]
 
 
 
@@ -63,7 +67,7 @@ def f(x, A, B): # this is your 'straight line' y=f(x)
 def average_distance(stroke1, stroke2):
     center1 = np.mean(stroke1.coords.T,axis=0)
     center2 = np.mean(stroke2.coords.T,axis=0)
-    return center2 - center1
+    return np.linalg.norm(center2 - center1)
 
 
 def parallelity(stroke1, stroke2):
@@ -110,7 +114,7 @@ class BoundingBox(object):
         return 0
 
 
-    """Here we account for overlap."""
+    """Here we account for overlap (only)"""
     def overlap_distance(self, other):
         if other.maxx > self.maxx: #If other is right of shape
             return max(self.maxx - other.minx,0)
@@ -118,7 +122,7 @@ class BoundingBox(object):
             return max(other.maxx - self.minx,0)
         return 0
 
-    """Here we account for overlap."""
+    """Here we account for overlap + non overlap."""
     def overlap_distance2(self, other):
         if other.maxx > self.maxx: #If other is right of shape
             return abs(self.maxx - other.minx)

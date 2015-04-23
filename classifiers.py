@@ -13,14 +13,32 @@ from utils import create_dir
 from settings import *
 
 
-############# SVM Classifier ##################
-def run_svm(svm, test_data):
+############# Random Forest Classifier ##################
+def run_rf(cls, test_data):
     results = []
     for idx, row in enumerate(test_data):
-        y_prime = svm.predict(np.array(row,dtype=float))[0]
+        y_prime = cls.predict(np.array(row,dtype=float))[0]
         results.append(y_prime)
     return np.array(results)
 
+def rf_runner(train_dir, test_inkmls):
+    print("Generating features for test data...")
+    test_data, strk_grps = inkmls_to_feature_matrix(test_inkmls)
+    test_X, _ = test_data[:,:-1], test_data[:,-1]
+
+    try:
+        rf = joblib.load(train_dir + 'classification-rf.pkl')
+    except Exception as e:
+        print("!!! Error: couldn't load parameter file for classification")
+        print("!!! Try running './train_classifiers.py' first")
+        print("!!! Details: '%s'" % e)
+        sys.exit(1)
+
+    print("Running Random Forest...")
+    preds = run_rf(rf, test_X)
+    print("Done.")
+
+    return (preds, strk_grps)
 
 ######## 1-NN Nearest Neighbor classifier #####
 def euclid_dist(x,y):
@@ -63,24 +81,6 @@ def nnr_runner(train_dir, test_inkmls):
 
 ###### End Nearest Neighbor ###########
 
-def svm_runner(train_dir, test_inkmls):
-    print("Generating features for test data...")
-    test_data, strk_grps = inkmls_to_feature_matrix(test_inkmls)
-    test_X, _ = test_data[:,:-1], test_data[:,-1]
-
-    try:
-        svm = joblib.load(train_dir + 'classification-svc.pkl')
-    except Exception as e:
-        print("!!! Error: couldn't load parameter file for classification")
-        print("!!! Try running './train_classifiers.py' first")
-        print("!!! Details: '%s'" % e)
-        sys.exit(1)
-
-    print("Running SVM...")
-    preds = run_svm(svm, test_X)
-    print("Done.")
-
-    return (preds, strk_grps)
 
 def generate_lgs(inkmls, path):
     create_dir(path)
@@ -121,7 +121,7 @@ def main(inputdir, outputdir, nnr, bonus, inputs):
     if nnr:
         (preds, strk_grps) = nnr_runner(train_dir, test_inkmls)
     else:
-        (preds, strk_grps) = svm_runner(train_dir, test_inkmls)
+        (preds, strk_grps) = rf_runner(train_dir, test_inkmls)
         
     for i, pred in enumerate(preds):
         strk_grps[i].prediction = pred
@@ -138,6 +138,8 @@ if __name__ == '__main__':
     main()
 
 
-##### Current results ########
+##### Part 1 results ########
 # Using 200 inkml files (1-NNR): 73%
 # Using 200 inkml files (SVM): ~80%
+
+##### Current Results ####### 
