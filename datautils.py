@@ -7,6 +7,7 @@ from collections import defaultdict
 from settings import *
 import operator
 import random
+from segmenter import SegmenterFeatures
 
 ######## Utility functions ################
 

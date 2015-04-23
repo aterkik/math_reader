@@ -2,6 +2,7 @@ from strokedata import Stroke, StrokeGroup
 from settings import PARAMS_DIR, BONUS_PARAMS_DIR
 from sklearn.externals import joblib
 import sys
+import numpy as np
 
 class Segmenter(object):
     def __init__(self):
@@ -35,4 +36,25 @@ class SegmenterFeatures(object):
         strk_pair: stroke pair
         strk_grps: the stroke group for the whole expression (including strk_pair)
         """
-        return [int(strk_pair[0]), int(strk_pair[1])]
+        bb = BoundingBox(strk_pair[0])
+        return [0, 0]
+        # return [int(strk_pair[0]), int(strk_pair[1])]
+
+
+class BoundingBox(object):
+
+    def __init__(self, stroke):
+        mins = np.amin(stroke.coords.T,axis=0)
+        maxs = np.amax(stroke.coords.T,axis=0)
+        self.minx = mins[0]
+        self.miny = mins[1]
+        self.width = abs(maxs[0] - mins[0])
+        self.height = abs(maxs[1] - mins[0])
+        self.maxx = maxs[0]
+        self.maxy = maxs[1]
+        self.center = np.array([self.minx + (self.width/2), self.miny + (self.height/2)])
+    
+
+    def distance(self, other):
+        return np.linalg.norm(self.center-other.center)
+    

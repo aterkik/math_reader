@@ -227,8 +227,9 @@ class Stroke(object):
         angles = []
         p1 = self.coords.T[0]
         for p2 in self.coords.T[1:]:
-            a = angle(p2,p1)
+            a = angle_between(p2,p1)
             angles.append(a)
+            p1 = p2
         return np.array(angles)
 
     def _curvature(self):
@@ -240,7 +241,7 @@ class Stroke(object):
     def _slope(self):
         slopes = []
         for i,row in enumerate(self.coords.T[2:]):
-            slopes.append(slope(self.coords.T[i-2],self.coords.T[i+2]))
+            slopes.append(curve(self.coords.T[i-2]+np.array([1,0]),self.coords.T[i-2],self.coords.T[i+2]))
         return np.array(slopes)
 
     def __unicode__(self):
@@ -315,22 +316,41 @@ def distance(p1,p2):
 def length(v):
     return np.sqrt(np.dot(v, v))
 
-def angle(v1,v2):
-    dot = (length(v1) * length(v2))
-    #orthogonal
-    if dot == 0:
-        return 1.57079
-    return np.arccos(round(np.dot(v1, v2) /dot))
+def unit_vector(vector):
+    """ Returns the unit vector of the vector.  """
+    with np.errstate(invalid='ignore'):
+        result = vector / np.linalg.norm(vector)
+    return result
+
+def angle_between(v1, v2):
+    """ Returns the angle in radians between vectors 'v1' and 'v2'::
+
+            >>> angle_between((1, 0, 0), (0, 1, 0))
+            1.5707963267948966
+            >>> angle_between((1, 0, 0), (1, 0, 0))
+            0.0
+            >>> angle_between((1, 0, 0), (-1, 0, 0))
+            3.141592653589793
+    """
+    v1_u = unit_vector(v1)
+    v2_u = unit_vector(v2)
+    with np.errstate(invalid='ignore'):
+        angle = np.arccos(np.dot(v1_u, v2_u))
+    if np.isnan(angle):
+        if (v1_u == v2_u).all():
+            return 0.0
+        else:
+            return np.pi
+    return angle
 
 def curve(p1,p2,p3):
-    a = distance(p1,p2)
-    b = distance(p2,p3)
-    c = distance(p1,p3)
-    if a == 0 or b == 0:
-        return -99
-    res = (a**2 + b**2 - c**2) / (2*a*b)
-    angleC = np.arccos(round(res))
-    return angleC
+    np1 = p1 - p2
+    np3 = p3 - p2
+    if np.linalg.norm(np1) == 0:
+        np1 = p1
+    if np.linalg.norm(np3) == 0:
+        np3 = p3
+    return angle_between(p1,p3)
 
 def slope(p1,p2):
     a = distance(p1,p2)
@@ -341,4 +361,3 @@ def slope(p1,p2):
     unit = (a/mag)
     angleC = np.arccos(c/unit)
     return angleC
-

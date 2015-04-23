@@ -1,6 +1,7 @@
 *.pyc
 TrainINKML_v3/*
 test/
+Results_LG_output/*
 
 # Parameter files
 test_set
