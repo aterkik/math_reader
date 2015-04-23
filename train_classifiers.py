@@ -49,6 +49,21 @@ def main():
         for inkml in train_inkmls:
             shutil.copy2(inkml.src, 'train_fold/' + os.path.basename(inkml.src))
 
+    create_dir(train_dir)
+
+    # Segmentation training
+    print("Loading train data (segmentation)...")
+    segment_inkmls_ground_truth(train_inkmls)
+    train_X, train_Y = inkmls_to_segmentation_feature_matrix(train_inkmls)
+    rbf_svc = svm.SVC(kernel='linear', cache_size=4000)
+    print("Training segmentation...")
+    rbf_svc.fit(train_X, train_Y)
+
+    joblib.dump(rbf_svc, train_dir + '/segmentation-svc.pkl')
+
+
+
+
     # Symbol classification training
     print("Loading train data (classification)...")
     train_data, _ = inkmls_to_feature_matrix(train_inkmls)
@@ -57,19 +72,10 @@ def main():
     print("Training classification...")
     rbf_svc.fit(train_X, train_Y)
 
-    create_dir(train_dir)
     joblib.dump(rbf_svc, train_dir + '/classification-svc.pkl')
     np.save(train_dir + '/1nnr.npy', train_data)
 
-    # Segmentation training
-    print("Loading train data (segmentation)...")
-    train_data = inkmls_to_segmentation_feature_matrix(train_inkmls)
-    train_X, train_Y = train_data[:,:-1], train_data[:,-1]
-    rbf_svc = svm.SVC(kernel='linear', cache_size=4000)
-    print("Training segmentation...")
-    rbf_svc.fit(train_X, train_Y)
-
-    joblib.dump(rbf_svc, train_dir + '/segmentation-svc.pkl')
+    
 
 
 

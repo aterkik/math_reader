@@ -60,13 +60,15 @@ class inkML(object):
             if from_ground_truth:
                 self.root, self.stroke_groups = self._parse_inkml(fd.read(), self.fname)
             else:
-                self.root, self.stroke_groups = self._parse_inkml_unsegmented(fd.read(), self.fname)
+                self.root, self.stroke_groups = self._parse_inkml_unsegmented(fd.read(), self.fname, segmenter_kind='main')
 
         except Exception as e:
+            #import pdb; pdb.set_trace()
             print("!!! Error parsing inkml file '%s'" % self.fname)
             print("Details: %s" % e)
         finally:
             fd.close()
+
         self.stroke_groups = sorted(self.stroke_groups, key=lambda grp: grp.strokes[0].id)
         self.src = self.fname
 
@@ -107,8 +109,10 @@ class inkML(object):
             strokes.append(stroke)
 
         if segmenter_kind == 'baseline':
+            print("Using baseline segmenter")
             partition = inkML.segmenter.baseline_segmenter(strokes)
         else:
+            print("Using main segmenter")
             partition = inkML.segmenter.main_segmenter(strokes)
 
         return (root, partition)

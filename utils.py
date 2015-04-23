@@ -25,6 +25,26 @@ class Line(object):
                 return xy[1]
         return None
 
+    def get_y(self, x):
+        return x*m + b
+
+    def get_x(self, y):
+        if self.x is not None:
+            # vertical line
+            return self.x
+
+        #if self.m == 0:
+        #    #XXX: dangerously bad hack
+        #    return 0
+        try:
+            return (y-self.b)/float(self.m)
+        except Exception as e:
+            #import pdb; pdb.set_trace()
+            print(e)
+            pass
+
+
+
     def __str__(self):
         if self.m is None:
             return "<Line: x=%s>" % self.x
