@@ -40,6 +40,24 @@ class SegmenterFeatures(object):
         return [0, 0]
         # return [int(strk_pair[0]), int(strk_pair[1])]
 
+    def _geometric_features(strk_pair, strk_grps):
+        pass
+
+
+
+def offset_beginning_end(stroke1, stroke2):
+    pass
+
+def distance_beginning_end(stroke1, stroke2):
+    return np.linalg.norm(stroke2.coords.T[0] - stroke1.coords.T[-1])
+
+
+def min_distance(stroke1, stroke2):
+    min_dist = 99999
+    for p1 in stroke1.coords.T:
+        for p2 in stroke2.coords.T:
+            min_dist = min(min_dist, np.linalg.norm(p2 - p1))
+    return min_dist
 
 class BoundingBox(object):
 
@@ -57,4 +75,30 @@ class BoundingBox(object):
 
     def distance(self, other):
         return np.linalg.norm(self.center-other.center)
-    
+
+
+    """I don't account for overlap, reason for max."""
+    def min_h_distance(self, other):
+        if other.maxx > self.maxx: #If other is right of shape
+            return max(other.minx - self.maxx,0)
+        if other.minx < self.minx: #If other is left of shape
+            return max(self.minx - other.maxx,0)
+        return 0
+
+
+    """Here we account for overlap."""
+    def overlap_distance(self, other):
+        if other.maxx > self.maxx: #If other is right of shape
+            return max(self.maxx - other.minx,0)
+        if other.minx < self.minx: #If other is left of shape
+            return max(other.maxx - self.minx,0)
+        return 0
+
+    """Here we account for overlap."""
+    def overlap_distance2(self, other):
+        if other.maxx > self.maxx: #If other is right of shape
+            return abs(self.maxx - other.minx)
+        if other.minx < self.minx: #If other is left of shape
+            return abs(other.maxx - self.minx)
+        return 0
+
