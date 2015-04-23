@@ -11,6 +11,7 @@ import sys
 import os
 import shutil
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import AdaBoostClassifier
 
 # what percentage to split (e.g. it's different for project vs bonus)
 # output parma file name
@@ -55,9 +56,9 @@ def main():
     print("Loading train data (segmentation)...")
     train_data = inkmls_to_segmentation_feature_matrix(train_inkmls)
     train_X, train_Y = train_data[:,:-1], train_data[:,-1]
-    rbf_svc = svm.SVC(kernel='linear', cache_size=4000)
+    seg_cls = AdaBoostClassifier()
     print("Training segmentation...")
-    rbf_svc.fit(train_X, train_Y)
+    seg_cls.fit(train_X, train_Y)
 
     # Symbol classification training
     print("Loading train data (classification)...")
@@ -73,7 +74,7 @@ def main():
 
 
 
-    joblib.dump(rbf_svc, train_dir + '/segmentation-svc.pkl')
+    joblib.dump(seg_cls, train_dir + '/segmentation-svc.pkl')
 
 
 
