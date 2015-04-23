@@ -3,6 +3,7 @@ from settings import PARAMS_DIR, BONUS_PARAMS_DIR
 from sklearn.externals import joblib
 import sys
 import numpy as np
+from scipy.optimize import curve_fit
 
 class Segmenter(object):
     def __init__(self):
@@ -37,6 +38,7 @@ class SegmenterFeatures(object):
         strk_grps: the stroke group for the whole expression (including strk_pair)
         """
         bb = BoundingBox(strk_pair[0])
+        parallelity(strk_pair[0],strk_pair[1])
         return [0, 0]
         # return [int(strk_pair[0]), int(strk_pair[1])]
 
@@ -50,6 +52,28 @@ def offset_beginning_end(stroke1, stroke2):
 
 def distance_beginning_end(stroke1, stroke2):
     return np.linalg.norm(stroke2.coords.T[0] - stroke1.coords.T[-1])
+
+
+
+
+def f(x, A, B): # this is your 'straight line' y=f(x)
+    return A*x + B
+
+
+def average_distance(stroke1, stroke2):
+    center1 = np.mean(stroke1.coords.T,axis=0)
+    center2 = np.mean(stroke2.coords.T,axis=0)
+    return center2 - center1
+
+
+def parallelity(stroke1, stroke2):
+    try:
+        A,B = curve_fit(f, stroke1.coords.T[:,0], stroke1.coords.T[:,1])[0] 
+        A2,B2 = curve_fit(f, stroke2.coords.T[:,0], stroke2.coords.T[:,1])[0] 
+    except:
+        ### When one stroke has <= 2 data points, how to handle??
+        return -99999
+    return A2 - A
 
 
 def min_distance(stroke1, stroke2):
