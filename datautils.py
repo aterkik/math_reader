@@ -73,18 +73,22 @@ def inkmls_to_feature_matrix(inkmls):
     return data, symbols
 
 def inkmls_to_segmentation_feature_matrix(inkmls):
-    data = np.array([])
+    Xs = np.array([])
+    Ys = []
     for inkml in inkmls:
-        pairs_features = _segment_features(inkml.stroke_groups)
-        if data.shape[0] == 0:
-            data = np.array(pairs_features)
-        else:
-            data = np.vstack((data, pairs_features))
+        features, new_ys = _segment_features(inkml.stroke_groups)
 
-    return data
+        if Xs .shape[0] == 0:
+            Xs = np.array(features)
+        else:
+            Xs = np.vstack((Xs, features))
+        Ys.extend(new_ys)
+
+    return (Xs, Ys)
 
 def _segment_features(stroke_groups):
-    data = np.array([])
+    Xs = np.array([])
+    Ys = []
     strokes = [strk for grp in stroke_groups for strk in grp.strokes]
     stroke_pairs = zip(strokes, strokes[1::])
     for pair in stroke_pairs:
@@ -94,12 +98,14 @@ def _segment_features(stroke_groups):
                 decision = 'merge'
                 break
 
-        features = SegmenterFeatures.get_features(pair, stroke_groups)
-        if data.shape[0] == 0:
-            data = np.array(features + [decision])
+        features = SegmenterFeatures.get_features(pair, strokes)
+        if Xs.shape[0] == 0:
+            Xs = np.array(features)
         else:
-            data = np.vstack((data, features + [decision]))
-    return data
+            Xs = np.vstack((Xs, features))
+        Ys.append(decision)
+
+    return Xs, Ys
 
 
 def split_dataset(inkmls, test_percentage):
@@ -191,11 +197,14 @@ def random_select_by_count(inkmls, symbol, count):
     return inkmls[:idx], inkmls[idx:]
 
 def segment_inkmls(inkmls):
+    #XXX: preprocess BEFORE parse
     for inkml in inkmls:
         inkml.parse(from_ground_truth=False)
         inkml.preprocess()
+    print("Total merges: %d" % inkmls[0].segmenter.total_merges)
 
 def segment_inkmls_ground_truth(inkmls):
+    #XXX: preprocess BEFORE parse
     for inkml in inkmls:
         inkml.parse(from_ground_truth=True)
         inkml.preprocess()

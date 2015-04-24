@@ -51,14 +51,16 @@ def main():
         for inkml in train_inkmls:
             shutil.copy2(inkml.src, 'train_fold/' + os.path.basename(inkml.src))
 
+    create_dir(train_dir)
 
     # Segmentation training
     print("Loading train data (segmentation)...")
-    train_data = inkmls_to_segmentation_feature_matrix(train_inkmls)
-    train_X, train_Y = train_data[:,:-1], train_data[:,-1]
+    segment_inkmls_ground_truth(train_inkmls)
+    train_X, train_Y = inkmls_to_segmentation_feature_matrix(train_inkmls)
     seg_cls = AdaBoostClassifier()
     print("Training segmentation...")
     seg_cls.fit(train_X, train_Y)
+    joblib.dump(seg_cls, train_dir + '/segmentation-svc.pkl')
 
     # Symbol classification training
     print("Loading train data (classification)...")
@@ -68,13 +70,10 @@ def main():
     print("Training classification...")
     rf.fit(train_X, train_Y)
 
-    create_dir(train_dir)
     joblib.dump(rf, train_dir + '/classification-rf.pkl')
     np.save(train_dir + '/1nnr.npy', train_data)
 
 
-
-    joblib.dump(seg_cls, train_dir + '/segmentation-svc.pkl')
 
 
 

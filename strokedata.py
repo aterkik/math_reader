@@ -202,17 +202,45 @@ class Stroke(object):
     def __init__(self, coords, id):
         if len(coords.strip().split(",")[0].split()) > 2:
             coords = coords.replace(",","").split(' ')
-            xcol = np.array([np.array(coords[0::3]).astype(np.float)])
-            ycol = np.array([np.array(coords[1::3]).astype(np.float)])
+            #xcol = np.array([np.array(coords[0::3]).astype(np.float)])
+            #ycol = np.array([np.array(coords[1::3]).astype(np.float)])
+
+            xcol = np.array(coords[0::3]).astype(np.float)
+            ycol = np.array(coords[1::3]).astype(np.float)
         else:
             coords = coords.replace(",","").split(' ')
-            xcol = np.array([np.array(coords[0::2]).astype(np.float)])
-            ycol = np.array([np.array(coords[1::2]).astype(np.float)])
+            #xcol = np.array([np.array(coords[0::2]).astype(np.float)])
+            #ycol = np.array([np.array(coords[1::2]).astype(np.float)])
+
+            xcol = np.array(coords[0::2]).astype(np.float)
+            ycol = np.array(coords[1::2]).astype(np.float)
 
         self.id = int(id)
         self.raw_coords = coords
         self.coords = np.vstack([xcol,ycol]).T
         self.rcoords = np.vstack([xcol,ycol]).T
+
+    def center(self):
+        xcol, ycol = self.coords.T[:,0], self.coords.T[:,1]
+        try:
+            minx = min(xcol)
+            miny = min(ycol)
+
+            maxx = max(xcol)
+            maxy = max(ycol)
+        except Exception as e:
+            #import pdb; pdb.set_trace()
+            print(e)
+            pass
+
+        return (minx+((maxx-minx)/2.0), miny+((maxy-miny)))
+
+
+
+
+
+        
+
 
     def _norm_line_length(self):
         dists = []
