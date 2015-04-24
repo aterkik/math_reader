@@ -12,6 +12,7 @@ import os
 import shutil
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import AdaBoostClassifier
+from sklearn import preprocessing
 
 # what percentage to split (e.g. it's different for project vs bonus)
 # output parma file name
@@ -53,14 +54,20 @@ def main():
 
     create_dir(train_dir)
 
+
     # Segmentation training
     print("Loading train data (segmentation)...")
     segment_inkmls_ground_truth(train_inkmls)
     train_X, train_Y = inkmls_to_segmentation_feature_matrix(train_inkmls)
+
+    #min_max_scaler = preprocessing.MinMaxScaler()
+    #train_X = min_max_scaler.fit_transform(train_X)
+
     seg_cls = AdaBoostClassifier()
     print("Training segmentation...")
     seg_cls.fit(train_X, train_Y)
     joblib.dump(seg_cls, train_dir + '/segmentation-svc.pkl')
+    #joblib.dump(min_max_scaler, train_dir + '/segmentation-scaler.pkl')
 
     # Symbol classification training
     print("Loading train data (classification)...")

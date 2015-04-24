@@ -6,15 +6,18 @@ import numpy as np
 import sys
 import numpy as np
 from scipy.optimize import curve_fit
+from sklearn import preprocessing
 
 class Segmenter(object):
     total_merges = 0
     def __init__(self):
         self.cls = None
+        #self.min_max_scaler = None
 
     def _load_params(self):
         try:
             self.cls = joblib.load(PARAMS_DIR + 'segmentation-svc.pkl')
+            #self.min_max_scaler = joblib.load(PARAMS_DIR + 'segmentation-scaler.pkl')
         except Exception as e:
             print("!!! Error: couldn't load parameter file for segmenter")
             print("!!! Try running './train_classifiers.py' first")
@@ -41,6 +44,8 @@ class Segmenter(object):
             #import pdb; pdb.set_trace()
             features = SegmenterFeatures.get_features(pair, strokes)
 
+
+            #features = self.min_max_scaler.transform(features)
             pred = self.cls.predict(features)
             decisions.append(pred[0])
 
@@ -95,8 +100,10 @@ class SegmenterFeatures(object):
         counts = strk_pair_bin.get_count(all_coords)
         counts = np.array(counts)/float(strk_pair[0].coords.shape[1])
 
-        geo_features = SegmenterFeatures._geometric_features(strk_pair, strk_grps)
-        features = geo_features + counts.tolist()
+        # TODO: commented out until we figure out why it's driving accuracy down
+        #geo_features = SegmenterFeatures._geometric_features(strk_pair, strk_grps)
+        #features = geo_features + counts.tolist()
+        features = counts.tolist()
         return features
 
     @staticmethod
