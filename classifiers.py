@@ -132,8 +132,8 @@ def main(inputdir, outputdir, nnr, bonus, inputs):
     os.system("python batch2lg.py '%s'" % inputdir)
     os.system("evaluate '%s' '%s'" % (outputdir, inputdir))
 
-    create_dir('Results_%sSummary.txt' % outputdir)
-    os.system("cat 'Results_%sSummary.txt'" % outputdir)
+    create_dir('Results_%s' % outputdir)
+    os.system("cat 'Results_%s/Summary.txt'" % outputdir)
 
 
 if __name__ == '__main__':

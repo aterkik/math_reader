@@ -174,7 +174,7 @@ class SegmenterFeatures(object):
 
         pair_probs = cls.predict_proba(pair_grp_features).flatten().tolist()
 
-        return single_probs + pair_probs
+        return [max(single_probs), max(pair_probs)]
 
     @staticmethod
     def shape_context_features(strk_pair, strk_grps):
