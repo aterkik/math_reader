@@ -116,13 +116,20 @@ class SegmenterFeatures(object):
         strk_pair: stroke pair
         strk_grps: the stroke group for the whole expression (including strk_pair)
         """
-        center = strk_pair[0].center()
-        try:
-            all_coords = np.vstack((strk_pair[0].coords.T, strk_pair[1].coords.T))
-        except Exception as e:
-            #import pdb; pdb.set_trace()
-            pass
 
+
+
+        # TODO: commented out until we figure out why it's driving accuracy down
+        #geo_features = SegmenterFeatures._geometric_features(strk_pair, strk_grps)
+        context_features = SegmenterFeatures.shape_context_features(strk_pair, strk_grps)
+        features = context_features
+        #features = geo_features + context_features
+        return features
+
+    @staticmethod
+    def shape_context_features(strk_pair, strk_grps):
+        center = strk_pair[0].center()
+        all_coords = np.vstack((strk_pair[0].coords.T, strk_pair[1].coords.T))
         radius = _max_distance(center, all_coords)
 
         strk_pair_bin = MainBin(center, radius)
@@ -137,14 +144,18 @@ class SegmenterFeatures(object):
 
         local_radius = _max_distance(center, local_all_coords)
         local_strk_bin = MainBin(center, local_radius)
-        local_counts = strk_pair_bin.get_count(local_all_coords)
+        local_counts = local_strk_bin.get_count(local_all_coords)
         local_counts = np.array(local_counts)/float(strk_pair[0].coords.shape[1])
 
-        # TODO: commented out until we figure out why it's driving accuracy down
-        #geo_features = SegmenterFeatures._geometric_features(strk_pair, strk_grps)
-        #features = geo_features + counts.tolist()
-        features = counts.tolist() + local_counts.tolist()
-        return features
+        # TODO: not using global features for now. They're slow and give only around 5% F-Measure boost
+        # global_all_coords = tuple([strk.coords.T for strk in strk_grps])
+        # global_all_coords = np.vstack(global_all_coords)
+        # global_radius = _max_distance(center, global_all_coords)
+        # global_strk_bin = MainBin(center, global_radius)
+        # global_counts = global_strk_bin.get_count(global_all_coords)
+        # global_counts = np.array(global_counts)/float(strk_pair[0].coords.shape[1])
+
+        return counts.tolist() + local_counts.tolist() # + global_counts.tolist()
 
     @staticmethod
     def _geometric_features(strk_pair, strk_grps):
