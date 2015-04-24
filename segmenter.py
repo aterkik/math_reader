@@ -36,7 +36,7 @@ class Segmenter(object):
         if not self.cls:
             self._load_params()
 
-        #XXX: terrible hack.
+        #XXX: terrible hack
         for strk in strokes:
             strk.coords = strk.coords.T
 
@@ -113,6 +113,7 @@ def _get_nearest_three(strk, all_strks, center):
 
 class SegmenterFeatures(object):
     #TODO: strk_grps is a bad name
+    symbol_cls = None
     @staticmethod
     def get_features(strk_pair, strk_grps):
         """Compute all segmentation features for stroke pair (strk_pair)
@@ -120,14 +121,60 @@ class SegmenterFeatures(object):
         strk_grps: the stroke group for the whole expression (including strk_pair)
         """
 
+        if not SegmenterFeatures.symbol_cls:
+            SegmenterFeatures.symbol_cls = joblib.load('params-recognition/recognition-rf.pkl')
+
+        #for strk in strk_grps:
+        #    strk.clean()
 
 
+        #import pdb;pdb.set_trace()
         # TODO: commented out until we figure out why it's driving accuracy down
         #geo_features = SegmenterFeatures._geometric_features(strk_pair, strk_grps)
         context_features = SegmenterFeatures.shape_context_features(strk_pair, strk_grps)
-        features = context_features
+        recognition_features = SegmenterFeatures.recognition_features(strk_pair, strk_grps)
+        features = context_features + recognition_features
         #features = geo_features + context_features
         return features
+    
+    @staticmethod
+    def recognition_features(strk_pair, strks):
+        # XXX: oh man ive to figure this hack out (preprocessing order bug, basically)
+        
+        single_grp = StrokeGroup([strk_pair[0]], 'A_1', ' ')
+
+        #strk_pair[0].coords = strk_pair[0].coords.T
+        
+        strk_pair[0].coords = strk_pair[0].coords.T
+        single_grp.preprocess()
+
+
+        
+        single_grp_features = single_grp.get_features()
+        cls = SegmenterFeatures.symbol_cls
+        single_probs = cls.predict_proba(single_grp_features).flatten().tolist()
+
+
+        #strk_pair[0].coords = strk_pair[0].coords.T
+
+        for strk in strk_pair:
+            strk.coords = strk.coords.T
+
+        pair_grp = StrokeGroup(list(strk_pair), 'A_2', ' ')
+        #XXX: undo this
+        pair_grp.preprocess()
+
+        # #TODO: do for three strokes also
+        pair_grp_features = pair_grp.get_features()
+
+        
+        # #XXX: revert back hack
+        # for strk in strks:
+        #     strk.coords = strk.coords.T
+
+        pair_probs = cls.predict_proba(pair_grp_features).flatten().tolist()
+
+        return single_probs + pair_probs
 
     @staticmethod
     def shape_context_features(strk_pair, strk_grps):

@@ -55,12 +55,26 @@ def main():
     create_dir(train_dir)
 
 
+    # Symbol classification training
+    # Should come before segmentation so that recogntion-based features can load params
+    print("Loading train data (classification)...")
+    train_data, _ = inkmls_to_feature_matrix(train_inkmls)
+    train_X, train_Y = train_data[:,:-1], train_data[:,-1]
+    rf = RandomForestClassifier(n_estimators=100, max_depth=10)
+    print("Training classification...")
+    rf.fit(train_X, train_Y)
+
+    joblib.dump(rf, train_dir + '/classification-rf.pkl')
+    create_dir('params-recognition')
+    joblib.dump(rf, 'params-recognition/recognition-rf.pkl')
+    np.save(train_dir + '/1nnr.npy', train_data)
+
+
     # Segmentation training
     print("Loading train data (segmentation)...")
     segment_inkmls_ground_truth(train_inkmls)
     train_X, train_Y = inkmls_to_segmentation_feature_matrix(train_inkmls)
 
-    import pdb; pdb.set_trace()
     min_max_scaler = preprocessing.MinMaxScaler()
     train_X = min_max_scaler.fit_transform(train_X)
     joblib.dump(min_max_scaler, train_dir + '/segmentation-scaler.pkl')
@@ -76,17 +90,7 @@ def main():
     seg_cls.fit(train_X, train_Y)
     joblib.dump(seg_cls, train_dir + '/segmentation-svc.pkl')
 
-    # Symbol classification training
-    print("Loading train data (classification)...")
-    train_data, _ = inkmls_to_feature_matrix(train_inkmls)
-    train_X, train_Y = train_data[:,:-1], train_data[:,-1]
-    rf = RandomForestClassifier(n_estimators=100, max_depth=10)
-    print("Training classification...")
-    rf.fit(train_X, train_Y)
-
-    joblib.dump(rf, train_dir + '/classification-rf.pkl')
-    np.save(train_dir + '/1nnr.npy', train_data)
-
+    
 
 
 

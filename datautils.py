@@ -61,6 +61,7 @@ def inkmls_to_feature_matrix(inkmls):
     total = len(symbols)
     for i, symbol in enumerate(symbols):
         features = symbol.get_features()
+
         # features = [1,2]
         if data.shape[0] == 0:
 
@@ -70,6 +71,7 @@ def inkmls_to_feature_matrix(inkmls):
 
         if i % 250 == 0:
             print("....%.2f%% complete (generating features)" % (100 * float(i)/total))
+
     return data, symbols
 
 def inkmls_to_segmentation_feature_matrix(inkmls):
