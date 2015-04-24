@@ -56,7 +56,6 @@ def main():
     create_dir(train_dir)
 
 
-
     # Symbol classification training
     # Should come before segmentation so that recogntion-based features can load params
     print("Loading train data (classification)...")
