@@ -78,6 +78,35 @@ def _max_distance(coord, coords):
     sum = squ.sum(axis=1)
     return np.sqrt(sum.max())
 
+def _min_distance(coord, coords):
+    coords = np.array(coords)
+    diff = coords - coord
+    squ = diff ** 2
+    sum = squ.sum(axis=1)
+    return np.sqrt(sum.min())
+
+def _get_nearest_three(strk, all_strks, center):
+    # Works by:
+    # find the three strokes on the left and three on the right of target stroke
+    # sort them by distance
+    # pick the three closest
+
+    idx = all_strks.index(strk)
+    start = max(0, idx-3)
+    end = min(idx+3, len(all_strks)-1)
+
+    candidates = all_strks[start:end+1]
+    candidates.remove(strk)
+    
+    dists = [None] * len(candidates)
+    for i, cand in enumerate(candidates):
+        dists[i] = _min_distance(center, cand.coords.T)
+    zipped = zip(dists, candidates)
+    nearest_3 = sorted(zipped, key=lambda obj: obj[0])
+    nearest_3 = map(lambda x: x[1], nearest_3)
+
+    return nearest_3
+
 
 class SegmenterFeatures(object):
     #TODO: strk_grps is a bad name
@@ -100,10 +129,21 @@ class SegmenterFeatures(object):
         counts = strk_pair_bin.get_count(all_coords)
         counts = np.array(counts)/float(strk_pair[0].coords.shape[1])
 
+        nearest_three = _get_nearest_three(strk_pair[0], strk_grps, center)
+        local_all_coords = np.vstack((nearest_three[0].coords.T,
+                            nearest_three[1].coords.T,
+                            nearest_three[2].coords.T))
+
+
+        local_radius = _max_distance(center, local_all_coords)
+        local_strk_bin = MainBin(center, local_radius)
+        local_counts = strk_pair_bin.get_count(local_all_coords)
+        local_counts = np.array(local_counts)/float(strk_pair[0].coords.shape[1])
+
         # TODO: commented out until we figure out why it's driving accuracy down
         #geo_features = SegmenterFeatures._geometric_features(strk_pair, strk_grps)
         #features = geo_features + counts.tolist()
-        features = counts.tolist()
+        features = counts.tolist() + local_counts.tolist()
         return features
 
     @staticmethod
