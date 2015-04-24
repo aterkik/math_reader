@@ -60,19 +60,21 @@ def main():
     segment_inkmls_ground_truth(train_inkmls)
     train_X, train_Y = inkmls_to_segmentation_feature_matrix(train_inkmls)
 
-    pca = decomposition.PCA(n_components=100)
+    import pdb; pdb.set_trace()
+    min_max_scaler = preprocessing.MinMaxScaler()
+    train_X = min_max_scaler.fit_transform(train_X)
+    joblib.dump(min_max_scaler, train_dir + '/segmentation-scaler.pkl')
+
+    pca = decomposition.PCA(n_components=min(100, train_X.shape[1]))
     train_X = pca.fit_transform(train_X)
     joblib.dump(pca, train_dir + '/pca.pkl')
 
 
-    #min_max_scaler = preprocessing.MinMaxScaler()
-    #train_X = min_max_scaler.fit_transform(train_X)
-
+    
     seg_cls = AdaBoostClassifier()
     print("Training segmentation...")
     seg_cls.fit(train_X, train_Y)
     joblib.dump(seg_cls, train_dir + '/segmentation-svc.pkl')
-    #joblib.dump(min_max_scaler, train_dir + '/segmentation-scaler.pkl')
 
     # Symbol classification training
     print("Loading train data (classification)...")

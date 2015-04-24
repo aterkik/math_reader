@@ -13,13 +13,13 @@ class Segmenter(object):
     def __init__(self):
         self.cls = None
         self.pca = None
-        #self.min_max_scaler = None
+        self.min_max_scaler = None
 
     def _load_params(self):
         try:
             self.cls = joblib.load(PARAMS_DIR + 'segmentation-svc.pkl')
             self.pca = joblib.load(PARAMS_DIR + 'pca.pkl')
-            #self.min_max_scaler = joblib.load(PARAMS_DIR + 'segmentation-scaler.pkl')
+            self.min_max_scaler = joblib.load(PARAMS_DIR + 'segmentation-scaler.pkl')
         except Exception as e:
             print("!!! Error: couldn't load parameter file for segmenter")
             print("!!! Try running './train_classifiers.py' first")
@@ -45,10 +45,10 @@ class Segmenter(object):
         for pair in pairs:
             #import pdb; pdb.set_trace()
             features = SegmenterFeatures.get_features(pair, strokes)
+            features = self.min_max_scaler.transform(features)
             features = self.pca.transform(features)
 
 
-            #features = self.min_max_scaler.transform(features)
             pred = self.cls.predict(features)
             decisions.append(pred[0])
 
