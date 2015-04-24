@@ -95,9 +95,8 @@ class SegmenterFeatures(object):
         counts = strk_pair_bin.get_count(all_coords)
         counts = np.array(counts)/float(strk_pair[0].coords.shape[1])
 
-        #geo_features = SegmenterFeatures._geometric_features(strk_pair, strk_grps)
-        #features = geo_features + counts.tolist()
-        features = counts.tolist()
+        geo_features = SegmenterFeatures._geometric_features(strk_pair, strk_grps)
+        features = geo_features + counts.tolist()
         return features
 
     @staticmethod
