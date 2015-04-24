@@ -6,7 +6,7 @@ from utils import create_dir
 import numpy as np
 from sklearn import svm
 from sklearn.externals import joblib
-from sklearn import preprocessing
+from sklearn import preprocessing, decomposition
 import sys
 import os
 import shutil
@@ -59,6 +59,11 @@ def main():
     print("Loading train data (segmentation)...")
     segment_inkmls_ground_truth(train_inkmls)
     train_X, train_Y = inkmls_to_segmentation_feature_matrix(train_inkmls)
+
+    pca = decomposition.PCA(n_components=100)
+    train_X = pca.fit_transform(train_X)
+    joblib.dump(pca, train_dir + '/pca.pkl')
+
 
     #min_max_scaler = preprocessing.MinMaxScaler()
     #train_X = min_max_scaler.fit_transform(train_X)

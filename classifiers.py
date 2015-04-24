@@ -131,6 +131,8 @@ def main(inputdir, outputdir, nnr, bonus, inputs):
     generate_lgs(test_inkmls, outputdir)
     os.system("python batch2lg.py '%s'" % inputdir)
     os.system("evaluate '%s' '%s'" % (outputdir, inputdir))
+
+    create_dir('Results_%Summary.txt' % outputdir)
     os.system("cat 'Results_%sSummary.txt'" % outputdir)
 
 
