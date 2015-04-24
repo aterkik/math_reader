@@ -12,12 +12,14 @@ class Segmenter(object):
     total_merges = 0
     def __init__(self):
         self.cls = None
-        #self.min_max_scaler = None
+        self.pca = None
+        self.min_max_scaler = None
 
     def _load_params(self):
         try:
             self.cls = joblib.load(PARAMS_DIR + 'segmentation-svc.pkl')
-            #self.min_max_scaler = joblib.load(PARAMS_DIR + 'segmentation-scaler.pkl')
+            self.pca = joblib.load(PARAMS_DIR + 'pca.pkl')
+            self.min_max_scaler = joblib.load(PARAMS_DIR + 'segmentation-scaler.pkl')
         except Exception as e:
             print("!!! Error: couldn't load parameter file for segmenter")
             print("!!! Try running './train_classifiers.py' first")
@@ -34,7 +36,7 @@ class Segmenter(object):
         if not self.cls:
             self._load_params()
 
-        #XXX: terrible hack.
+        #XXX: terrible hack
         for strk in strokes:
             strk.coords = strk.coords.T
 
@@ -43,9 +45,10 @@ class Segmenter(object):
         for pair in pairs:
             #import pdb; pdb.set_trace()
             features = SegmenterFeatures.get_features(pair, strokes)
+            features = self.min_max_scaler.transform(features)
+            features = self.pca.transform(features)
 
 
-            #features = self.min_max_scaler.transform(features)
             pred = self.cls.predict(features)
             decisions.append(pred[0])
 
@@ -110,19 +113,73 @@ def _get_nearest_three(strk, all_strks, center):
 
 class SegmenterFeatures(object):
     #TODO: strk_grps is a bad name
+    symbol_cls = None
     @staticmethod
     def get_features(strk_pair, strk_grps):
         """Compute all segmentation features for stroke pair (strk_pair)
         strk_pair: stroke pair
         strk_grps: the stroke group for the whole expression (including strk_pair)
         """
-        center = strk_pair[0].center()
-        try:
-            all_coords = np.vstack((strk_pair[0].coords.T, strk_pair[1].coords.T))
-        except Exception as e:
-            #import pdb; pdb.set_trace()
-            pass
 
+        if not SegmenterFeatures.symbol_cls:
+            SegmenterFeatures.symbol_cls = joblib.load('params-recognition/recognition-rf.pkl')
+
+        #for strk in strk_grps:
+        #    strk.clean()
+
+
+        #import pdb;pdb.set_trace()
+        # TODO: commented out until we figure out why it's driving accuracy down
+        #geo_features = SegmenterFeatures._geometric_features(strk_pair, strk_grps)
+        context_features = SegmenterFeatures.shape_context_features(strk_pair, strk_grps)
+        recognition_features = SegmenterFeatures.recognition_features(strk_pair, strk_grps)
+        features = context_features + recognition_features
+        #features = geo_features + context_features
+        return features
+    
+    @staticmethod
+    def recognition_features(strk_pair, strks):
+        # XXX: oh man ive to figure this hack out (preprocessing order bug, basically)
+        
+        single_grp = StrokeGroup([strk_pair[0]], 'A_1', ' ')
+
+        #strk_pair[0].coords = strk_pair[0].coords.T
+        
+        strk_pair[0].coords = strk_pair[0].coords.T
+        single_grp.preprocess()
+
+
+        
+        single_grp_features = single_grp.get_features()
+        cls = SegmenterFeatures.symbol_cls
+        single_probs = cls.predict_proba(single_grp_features).flatten().tolist()
+
+
+        #strk_pair[0].coords = strk_pair[0].coords.T
+
+        for strk in strk_pair:
+            strk.coords = strk.coords.T
+
+        pair_grp = StrokeGroup(list(strk_pair), 'A_2', ' ')
+        #XXX: undo this
+        pair_grp.preprocess()
+
+        # #TODO: do for three strokes also
+        pair_grp_features = pair_grp.get_features()
+
+        
+        # #XXX: revert back hack
+        # for strk in strks:
+        #     strk.coords = strk.coords.T
+
+        pair_probs = cls.predict_proba(pair_grp_features).flatten().tolist()
+
+        return [max(single_probs), max(pair_probs)]
+
+    @staticmethod
+    def shape_context_features(strk_pair, strk_grps):
+        center = strk_pair[0].center()
+        all_coords = np.vstack((strk_pair[0].coords.T, strk_pair[1].coords.T))
         radius = _max_distance(center, all_coords)
 
         strk_pair_bin = MainBin(center, radius)
@@ -130,21 +187,25 @@ class SegmenterFeatures(object):
         counts = np.array(counts)/float(strk_pair[0].coords.shape[1])
 
         nearest_three = _get_nearest_three(strk_pair[0], strk_grps, center)
-        local_all_coords = np.vstack((nearest_three[0].coords.T,
-                            nearest_three[1].coords.T,
-                            nearest_three[2].coords.T))
+        nearest_three = [strk_pair[0].coords.T] + [strk.coords.T for strk in nearest_three]
+        nearest_three = tuple(nearest_three)
+        local_all_coords = np.vstack(nearest_three)
 
 
         local_radius = _max_distance(center, local_all_coords)
         local_strk_bin = MainBin(center, local_radius)
-        local_counts = strk_pair_bin.get_count(local_all_coords)
+        local_counts = local_strk_bin.get_count(local_all_coords)
         local_counts = np.array(local_counts)/float(strk_pair[0].coords.shape[1])
 
-        # TODO: commented out until we figure out why it's driving accuracy down
-        #geo_features = SegmenterFeatures._geometric_features(strk_pair, strk_grps)
-        #features = geo_features + counts.tolist()
-        features = counts.tolist() + local_counts.tolist()
-        return features
+        # TODO: not using global features for now. They're slow and give only around 5% F-Measure boost
+        # global_all_coords = tuple([strk.coords.T for strk in strk_grps])
+        # global_all_coords = np.vstack(global_all_coords)
+        # global_radius = _max_distance(center, global_all_coords)
+        # global_strk_bin = MainBin(center, global_radius)
+        # global_counts = global_strk_bin.get_count(global_all_coords)
+        # global_counts = np.array(global_counts)/float(strk_pair[0].coords.shape[1])
+
+        return counts.tolist() + local_counts.tolist() # + global_counts.tolist()
 
     @staticmethod
     def _geometric_features(strk_pair, strk_grps):

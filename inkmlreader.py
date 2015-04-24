@@ -66,6 +66,7 @@ class inkML(object):
             #import pdb; pdb.set_trace()
             print("!!! Error parsing inkml file '%s'" % self.fname)
             print("Details: %s" % e)
+            raise e
         finally:
             fd.close()
 
