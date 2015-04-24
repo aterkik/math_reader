@@ -100,6 +100,12 @@ def load_testset_inkmls():
     path = TEST_FOLD_DIR if TEST_FOLD_DIR.endswith("/") else TEST_FOLD_DIR + "/"
     return get_inkml_objects(fnames, prefix=path)
 
+def load_trainset_inkmls():
+    fnames = filter(lambda f: 'inkml' in f, os.listdir(TRAIN_FOLD_DIR))
+    path = TRAIN_FOLD_DIR if TRAIN_FOLD_DIR.endswith("/") else TRAIN_FOLD_DIR + "/"
+    return get_inkml_objects(fnames, prefix=path)
+
+
 
 if __name__ == '__main__':
     main()

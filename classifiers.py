@@ -8,8 +8,8 @@ import numpy as np
 from sklearn.externals import joblib
 from sklearn import preprocessing
 from datautils import *
-from train_classifiers import load_testset_inkmls, TEST_FOLD_DIR
-from utils import create_dir
+from train_classifiers import load_testset_inkmls, load_trainset_inkmls
+from utils import create_dir, empty_dir
 from settings import *
 
 
@@ -114,8 +114,10 @@ def main(inputdir, outputdir, nnr, bonus, inputs):
         test_inkmls = get_inkml_objects(file_names, prefix='')
     else:
         print("Using hold-out set for test data (not user-supplied)...")
-        test_inkmls = load_testset_inkmls()
-        inputdir = TEST_FOLD_DIR
+        #test_inkmls = load_testset_inkmls()
+        #inputdir = TEST_FOLD_DIR 
+        test_inkmls = load_trainset_inkmls()
+        inputdir = TRAIN_FOLD_DIR
 
     segment_inkmls(test_inkmls)
     if nnr:
@@ -130,10 +132,10 @@ def main(inputdir, outputdir, nnr, bonus, inputs):
     # label graphs
     generate_lgs(test_inkmls, outputdir)
     os.system("python batch2lg.py '%s'" % inputdir)
-    os.system("evaluate '%s' '%s'" % (outputdir, inputdir))
+    empty_dir('Results_%s' % outputdir)
 
-    create_dir('Results_%s' % outputdir)
-    os.system("cat 'Results_%s/Summary.txt'" % outputdir)
+    os.system("evaluate '%s' '%s'" % (outputdir, inputdir))
+    os.system("cat 'Results_%sSummary.txt'" % outputdir)
 
 
 if __name__ == '__main__':

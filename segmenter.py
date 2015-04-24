@@ -187,9 +187,9 @@ class SegmenterFeatures(object):
         counts = np.array(counts)/float(strk_pair[0].coords.shape[1])
 
         nearest_three = _get_nearest_three(strk_pair[0], strk_grps, center)
-        local_all_coords = np.vstack((strk_pair[0].coords.T, nearest_three[0].coords.T,
-                            nearest_three[1].coords.T,
-                            nearest_three[2].coords.T))
+        nearest_three = [strk_pair[0].coords.T] + [strk.coords.T for strk in nearest_three]
+        nearest_three = tuple(nearest_three)
+        local_all_coords = np.vstack(nearest_three)
 
 
         local_radius = _max_distance(center, local_all_coords)
