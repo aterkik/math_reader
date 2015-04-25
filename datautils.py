@@ -97,7 +97,7 @@ def inkmls_to_segmentation_feature_matrix(inkmls):
                 Xs = np.vstack((Xs, features))
         Ys.extend(new_ys)
 
-        if i % 250 == 0:
+        if i % 5 == 0:
             print("....%.2f%% complete (generating segmentation features)" % (100 * float(i)/total))
 
 
@@ -216,6 +216,8 @@ def random_select_by_count(inkmls, symbol, count):
 def segment_inkmls(inkmls):
     #XXX: preprocess BEFORE parse
     total = len(inkmls)
+
+    print("Using main segmenter")
     for i, inkml in enumerate(inkmls):
         inkml.parse(from_ground_truth=False)
         inkml.preprocess()

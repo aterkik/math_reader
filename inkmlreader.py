@@ -110,10 +110,8 @@ class inkML(object):
             strokes.append(stroke)
 
         if segmenter_kind == 'baseline':
-            print("Using baseline segmenter")
             partition = inkML.segmenter.baseline_segmenter(strokes)
         else:
-            print("Using main segmenter")
             partition = inkML.segmenter.main_segmenter(strokes)
 
         return (root, partition)
