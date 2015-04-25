@@ -10,6 +10,7 @@ from sklearn import preprocessing, decomposition
 import sys
 import os
 import shutil
+from settings import TEST_FRACTION
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn import preprocessing
@@ -19,10 +20,10 @@ from sklearn import preprocessing
 
 
 
-def get_train_test_split(test_fraction=TEST_FRACTION):
+def get_train_test_split(test_fraction=TEST_FRACTION, src=None):
     """Returns feature vectors for training data and InkML objects
     for test set"""
-    inkmls = load_dataset()
+    inkmls = load_dataset(src)
     segment_inkmls_ground_truth(inkmls)
     train_inkmls, test_inkmls = split_dataset(inkmls, test_fraction)
     return train_inkmls, test_inkmls
@@ -34,13 +35,17 @@ def main():
         We also save learned params for our main classifier and
         numpy features array for 1-NN classifier.
     """
+    src = None
+    if len(sys.argv) > 1 and not sys.argv[1].startswith("--"):
+        src = sys.argv[1]
 
     if '--bonus' in sys.argv:
         # For bonus round, train using all data
-        train_data, test_inkmls = get_train_test_split(test_fraction=0)
+        train_data, test_inkmls = get_train_test_split(test_fraction=0, src=src)
         train_dir = 'bonus_params'
     else:
-        (train_inkmls, test_inkmls) = get_train_test_split()
+        
+        (train_inkmls, test_inkmls) = get_train_test_split(TEST_FRACTION, src=src)
         train_dir = 'params'
         # Save test files
         create_dir('test_fold')

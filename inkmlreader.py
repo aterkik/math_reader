@@ -142,7 +142,6 @@ class inkML(object):
             except:
                 print("!! Warning: couldn't find annotationXML for tracegroup"
                       " in file %s" % fname)
-                raise Exception()
                 annot_id = "u_" + str(i)
 
             grp = []

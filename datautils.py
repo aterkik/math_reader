@@ -3,6 +3,7 @@
 """
 from inkmlreader import inkML
 import numpy as np
+import os
 from collections import defaultdict
 from settings import *
 import operator
@@ -11,7 +12,7 @@ from segmenter import SegmenterFeatures
 
 ######## Utility functions ################
 
-def load_dataset():
+def load_dataset(src=None):
     # How it works:
     # Reads list of inkml files
     # Parses inkml files and target outputs
@@ -19,13 +20,19 @@ def load_dataset():
     # Calculate features for each symbol and append target output
 
     try:
-        inkml_file_names = open(TRAIN_PATH + TRAIN_FNAME_SRC).read().splitlines()
-    except:
-        print("!!! Error opening training data. Please modify TRAIN_SRC_PATH.")
+        if not src:
+            inkml_file_names = open(TRAIN_PATH + TRAIN_FNAME_SRC).read().splitlines()
+            print("Loaded training/test split from folder '%s'..." % TRAIN_PATH)
+        else:
+            inkml_file_names = filter(lambda f: 'inkml' in f, os.listdir(src))
+            print("Loaded training/test split from folder '%s'..." % src)
+
+    except Exception as e:
+        print("!!! Error opening training data. Please modify TRAIN_SRC_PATH or invalid training directory supplied.")
         import sys
         sys.exit(1)
 
-    return get_inkml_objects(inkml_file_names)
+    return get_inkml_objects(inkml_file_names, prefix=src)
 
 def get_inkml_objects(inkml_file_names, prefix=TRAIN_PATH):
     inkmls = []
@@ -77,14 +84,22 @@ def inkmls_to_feature_matrix(inkmls):
 def inkmls_to_segmentation_feature_matrix(inkmls):
     Xs = np.array([])
     Ys = []
-    for inkml in inkmls:
+    total = len(inkmls)
+    for i, inkml in enumerate(inkmls):
         features, new_ys = _segment_features(inkml.stroke_groups)
 
-        if Xs .shape[0] == 0:
+        if Xs.shape[0] == 0:
             Xs = np.array(features)
         else:
-            Xs = np.vstack((Xs, features))
+            # Expressions with single stroke only have no segmentation features
+            # because there is no pairing
+            if features.size > 0:
+                Xs = np.vstack((Xs, features))
         Ys.extend(new_ys)
+
+        if i % 250 == 0:
+            print("....%.2f%% complete (generating segmentation features)" % (100 * float(i)/total))
+
 
     return (Xs, Ys)
 
@@ -200,9 +215,13 @@ def random_select_by_count(inkmls, symbol, count):
 
 def segment_inkmls(inkmls):
     #XXX: preprocess BEFORE parse
-    for inkml in inkmls:
+    total = len(inkmls)
+    for i, inkml in enumerate(inkmls):
         inkml.parse(from_ground_truth=False)
         inkml.preprocess()
+
+        if i % 5 == 0:
+            print("....%.2f%% complete (segmenting)" % (100 * float(i)/total))
     print("Total merges: %d" % inkmls[0].segmenter.total_merges)
 
 def segment_inkmls_ground_truth(inkmls):
