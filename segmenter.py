@@ -36,6 +36,10 @@ class Segmenter(object):
         if not self.cls:
             self._load_params()
 
+        # Only one stroke, only one partition
+        if len(strokes) <= 1:
+            return [StrokeGroup(strokes, 'A_1', ' ')]
+
         #XXX: terrible hack
         for strk in strokes:
             strk.coords = strk.coords.T
@@ -132,8 +136,8 @@ class SegmenterFeatures(object):
         # TODO: commented out until we figure out why it's driving accuracy down
         #geo_features = SegmenterFeatures._geometric_features(strk_pair, strk_grps)
         context_features = SegmenterFeatures.shape_context_features(strk_pair, strk_grps)
-        recognition_features = SegmenterFeatures.recognition_features(strk_pair, strk_grps)
-        features = context_features + recognition_features
+        #recognition_features = SegmenterFeatures.recognition_features(strk_pair, strk_grps)
+        features = context_features #+ recognition_features
         #features = geo_features + context_features
         return features
     
