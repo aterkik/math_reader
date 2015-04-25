@@ -219,8 +219,10 @@ def segment_inkmls(inkmls):
 
     print("Using main segmenter")
     for i, inkml in enumerate(inkmls):
+        inkml.read_strokes()
+        inkml.segment_preprocess()
         inkml.parse(from_ground_truth=False)
-        inkml.preprocess()
+        inkml.symbol_preprocess()
 
         if i % 5 == 0:
             print("....%.2f%% complete (segmenting)" % (100 * float(i)/total))
@@ -229,8 +231,10 @@ def segment_inkmls(inkmls):
 def segment_inkmls_ground_truth(inkmls):
     #XXX: preprocess BEFORE parse
     for inkml in inkmls:
+        inkml.read_strokes()
+        inkml.segment_preprocess()
         inkml.parse(from_ground_truth=True)
-        inkml.preprocess()
+        inkml.symbol_preprocess()
 
 
 ########## End utility functions ##############
