@@ -78,6 +78,8 @@ def inkmls_to_segmentation_feature_matrix(inkmls):
     Xs = np.array([])
     Ys = []
     for inkml in inkmls:
+        if len(inkml.stroke_groups) <= 0:
+            continue
         features, new_ys = _segment_features(inkml.stroke_groups)
 
         if Xs .shape[0] == 0:
@@ -208,8 +210,11 @@ def segment_inkmls(inkmls):
 def segment_inkmls_ground_truth(inkmls):
     #XXX: preprocess BEFORE parse
     for inkml in inkmls:
-        inkml.parse(from_ground_truth=True)
-        inkml.preprocess()
+        try:
+            inkml.parse(from_ground_truth=True)
+            inkml.preprocess()
+        except:
+            continue
 
 
 ########## End utility functions ##############

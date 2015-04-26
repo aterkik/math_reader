@@ -44,7 +44,8 @@ class inkML(object):
         self.fname = fname
         self.root = None
         self.src = None #TODO: this is redundant, see self.fname.
-        self.stroke_groups = None
+        self.src = fname
+        self.stroke_groups = []
     
     def parse(self, from_ground_truth=False):
         try:
