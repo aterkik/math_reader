@@ -78,8 +78,22 @@ class inkML(object):
         for strk in self._strokes:
             strk.clean()
         coords_before = self._strokes[0].coords
+        self.expr_size_scaling2()
         #XXX:TODO:self.expr_size_scaling()
         pass
+
+    def expr_size_scaling2(self):
+        xh,yh = (self._xmax_expr - self._xmin_expr),(self._ymax_expr - self._ymin_expr)
+        for strk in self._strokes:
+            new_coords = []
+            for coord in strk.coords:
+                ncoordx = ((coord[0] - self._xmin_expr) / max(xh,yh)) * 200
+                ncoordy = ((coord[1] - self._ymin_expr) / max(xh,yh)) * 200
+                new_coords.append([ncoordx,ncoordy])
+
+
+            strk.coords = np.array(new_coords)
+
 
     def expr_size_scaling(self):
         ymin, ymax = 0, 200

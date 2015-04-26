@@ -133,7 +133,7 @@ class SegmenterFeatures(object):
 
         #import pdb;pdb.set_trace()
         # TODO: commented out until we figure out why it's driving accuracy down
-        #geo_features = SegmenterFeatures._geometric_features(strk_pair, strk_grps)
+        # geo_features = SegmenterFeatures._geometric_features(strk_pair, strk_grps)
         context_features = SegmenterFeatures.shape_context_features(strk_pair, strk_grps)
         #recognition_features = SegmenterFeatures.recognition_features(strk_pair, strk_grps)
         features = context_features #+ recognition_features
