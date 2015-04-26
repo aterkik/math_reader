@@ -12,6 +12,7 @@ class StrokeGroup(object):
         self.prediction = None
         # Flag to tell whether symbol is preprocessed
         self._is_preprocessed = False
+
         self.xmin, self.xmax = None, None
         self.ymin, self.ymax = None, None
 
@@ -25,13 +26,7 @@ class StrokeGroup(object):
     def strk_ids(self):
         return ", ".join([str(strk.id) for strk in self.strokes])
 
-
-    def preprocess(self):
-        for stroke in self.strokes:
-            stroke.clean()
-
-
-        # It's best to do size normaliztion after cleaning
+    def size_scale(self):
         [self.xmin, self.ymin] = np.min([stroke.coords.min(axis=0)
                                for stroke in self.strokes], axis=0)
         [self.xmax, self.ymax] = np.max([stroke.coords.max(axis=0)
@@ -51,7 +46,6 @@ class StrokeGroup(object):
                             for stroke in self.strokes], axis=0)
 
         self._is_preprocessed = True
-        #self.get_features()
 
     def get_features(self):
         #TODO: append line length & angle features
@@ -219,6 +213,7 @@ class Stroke(object):
         self.raw_coords = coords
         self.coords = np.vstack([xcol,ycol]).T
         self.rcoords = np.vstack([xcol,ycol]).T
+        self.is_clean = False
 
     def center(self):
         xcol, ycol = self.coords.T[:,0], self.coords.T[:,1]
@@ -306,6 +301,10 @@ class Stroke(object):
 
     def clean(self):
         """Does duplicate filtering & stroke smoothing"""
+
+        if self.is_clean:
+            return
+
         if len(self.coords) < 1:
             return
 
@@ -330,6 +329,7 @@ class Stroke(object):
             pair[1] = (uniques[i-1][1]+uniques[i][1]+uniques[i+1][1]) / 3.0
 
         self.coords = np.array(uniques)
+        self.is_clean = True
 
     def plot(self):
         plt.scatter(self.coords[:,0], self.coords[:,1])

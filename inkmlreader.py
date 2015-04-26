@@ -11,7 +11,7 @@ from segmenter import Segmenter
     >>> inkml = inkML('test.inkml')
     >>> inkml.stroke_groups
     [<inkmlreader.StrokeGroup object at 0x10d6d6dd8>, ...]
-    >>> inkml.preprocess() # does duplicate removal, size normaliztion ...
+    >>> inkml.symbol_preprocess() # does duplicate removal, size normaliztion ...
     >>> writer = InkMLWriter('test.inkml', inkml.stroke_groups)
     >>> writer.write() # inkml output of *normalized* traces
     <ink>
@@ -44,8 +44,9 @@ class inkML(object):
         self.fname = fname
         self.root = None
         self.src = None #TODO: this is redundant, see self.fname.
-        self.src = fname
-        self.stroke_groups = []
+
+        self.stroke_groups = None
+        self._strokes = None
     
     def parse(self, from_ground_truth=False):
         try:
@@ -74,9 +75,22 @@ class inkML(object):
         self.stroke_groups = sorted(self.stroke_groups, key=lambda grp: grp.strokes[0].id)
         self.src = self.fname
 
-    def preprocess(self):
+    def segment_preprocess(self):
+        for strk in self._strokes:
+            strk.clean()
+        self.expr_size_scaling()
+
+    def expr_size_scaling(self):
+        pass
+
+    def symbol_preprocess(self):
+        for strk in self._strokes:
+            strk.clean()
+        self.symbol_size_scaling()
+
+    def symbol_size_scaling(self):
         for strk_grp in self.stroke_groups:
-            strk_grp.preprocess()
+            strk_grp.size_scale()
 
     def has_symbol(self, symbol):
         for grp in self.stroke_groups:
@@ -111,13 +125,27 @@ class inkML(object):
             strokes.append(stroke)
 
         if segmenter_kind == 'baseline':
-            print("Using baseline segmenter")
             partition = inkML.segmenter.baseline_segmenter(strokes)
         else:
-            print("Using main segmenter")
             partition = inkML.segmenter.main_segmenter(strokes)
 
         return (root, partition)
+
+    def read_strokes(self):
+        """Reads list of strokes only. No metadata/ground truth.
+        Needed for preprocessing"""
+        inkml_data = open(self.fname).read()
+        root = ET.fromstring(inkml_data)
+        np = root.tag.rstrip('ink') # get namespace, bad hack!
+
+        traces = root.findall(np + 'trace')
+        strokes = []
+        for trace in traces:
+            strokes.append(Stroke(trace.text.strip(), trace.attrib['id']))
+        self._strokes = strokes
+
+
+
 
     @staticmethod
     def _parse_inkml(inkml_data, fname):
@@ -143,7 +171,6 @@ class inkML(object):
             except:
                 print("!! Warning: couldn't find annotationXML for tracegroup"
                       " in file %s" % fname)
-                raise Exception()
                 annot_id = "u_" + str(i)
 
             grp = []
@@ -182,7 +209,7 @@ if __name__ == '__main__':
         fname = sys.argv[1]
 
         inkml = inkML(fname)
-        inkml.preprocess()
+        inkml.symbol_preprocess()
 
         writer = InkMLWriter(fname, inkml.stroke_groups)
         #print(writer.write())
