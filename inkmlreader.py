@@ -5,6 +5,7 @@ import xml.etree.ElementTree as ET
 import numpy as np
 from strokedata import Stroke, StrokeGroup
 from segmenter import Segmenter
+import matplotlib.pyplot as plt
 
 """
     Usage:
@@ -78,8 +79,47 @@ class inkML(object):
         for strk in self._strokes:
             strk.clean()
         coords_before = self._strokes[0].coords
-        self.expr_size_scaling2()
+        self.resample()
+        # self.expr_size_scaling2()
+
         #coords_before = self._strokes[0].coords
+
+
+    def resample(self,alpha=13):
+        # all_coords = []
+        # other_coords = []
+        for stroke in self._strokes:
+            coords = stroke.coords
+            L = [0]
+            for i in range(1,len(coords)):
+                L.append(L[i-1] + np.linalg.norm(coords[i] - coords[i-1]))
+            m = int(np.floor(L[-1]/alpha))
+            n = len(coords) - 1
+            p1 = coords[0]
+            ncoords = []
+            j = 1
+            for p in range(1,m-1):
+                while L[j] < p * alpha:
+                    j += 1
+                C = (p*alpha-L[j-1])/(L[j] - L[j-1])
+                nx = (coords[j-1][0] + (coords[j][0] - coords[j-1][0]) * C) 
+                ny = (coords[j-1][1] + (coords[j][1] - coords[j-1][1]) * C)
+                ncoords.append([nx,ny])
+            ncoords.append([coords[-1][0],coords[-1][1]])
+            stroke.coords = np.array(ncoords)
+            # all_coords.extend(ncoords)
+            # other_coords.extend(coords)
+        # cs = np.array(all_coords)
+        # cs2 = np.array(other_coords)
+        # plt.scatter(cs[:,0],cs[:,1])
+        # plt.figure()
+        # plt.scatter(cs2[:,0],cs2[:,1])
+        # plt.show()
+        # import time
+        # time.sleep(5)
+
+
+
 
     def expr_size_scaling2(self):
         xh,yh = (self._xmax_expr - self._xmin_expr),(self._ymax_expr - self._ymin_expr)
@@ -92,6 +132,8 @@ class inkML(object):
 
 
             strk.coords = np.array(new_coords)
+
+
 
 
     def expr_size_scaling(self):
