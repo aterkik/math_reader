@@ -77,10 +77,38 @@ class inkML(object):
     def segment_preprocess(self):
         for strk in self._strokes:
             strk.clean()
-        self.expr_size_scaling()
+        coords_before = self._strokes[0].coords
+        #XXX:TODO:self.expr_size_scaling()
+        pass
 
     def expr_size_scaling(self):
-        pass
+        ymin, ymax = 0, 200
+
+        xmin_expr, ymin_expr = self._xmin_expr, self._ymin_expr
+        xmax_expr, ymax_expr = self._xmax_expr, self._ymax_expr
+
+        wh_ratio = (xmax_expr-xmin_expr)/float(ymax_expr-ymin_expr)
+        xmin, xmax = 0, ymax * wh_ratio
+        
+        y_ratio = (ymax-ymin)/(ymax_expr-ymin_expr)
+        x_ratio = (xmax-xmin)/(xmax_expr-xmin_expr)
+
+        for strk in self._strokes:
+            coords = strk.coords
+            xmin_stroke, xmax_stroke = coords[:,0].min(), coords[:,0].max()
+            ymin_stroke, ymax_stroke = coords[:,1].min(), coords[:,1].max()
+
+            new_coords = []
+            for coord in coords:
+                x, y = coord
+                y_offset = (ymin_stroke-ymin_expr) * y_ratio
+                new_y = y_offset + ((y-ymin_expr) * y_ratio)
+
+                x_offset = (xmin_stroke-xmin_expr) * x_ratio
+                new_x = x_offset + ((x-xmin_expr) * x_ratio)
+
+                new_coords.append([new_x, new_y])
+            strk.coords = np.array(new_coords)
 
     def symbol_preprocess(self):
         for strk in self._strokes:
@@ -135,13 +163,18 @@ class inkML(object):
         Needed for preprocessing"""
         inkml_data = open(self.fname).read()
         root = ET.fromstring(inkml_data)
-        np = root.tag.rstrip('ink') # get namespace, bad hack!
+        namespace = root.tag.rstrip('ink') # get namespace, bad hack!
 
-        traces = root.findall(np + 'trace')
+        traces = root.findall(namespace + 'trace')
         strokes = []
         for trace in traces:
             strokes.append(Stroke(trace.text.strip(), trace.attrib['id']))
         self._strokes = strokes
+
+        [self._xmin_expr, self._ymin_expr] = np.min([strk.coords.min(axis=0)
+                               for strk in self._strokes], axis=0)
+        [self._xmax_expr, self._ymax_expr] = np.max([strk.coords.max(axis=0)
+                            for strk in self._strokes], axis=0)
 
 
 

@@ -91,7 +91,7 @@ def main():
 
 
     
-    seg_cls = AdaBoostClassifier(DecisionTreeClassifier(max_depth=1), algorithm="SAMME", n_estimators=200)
+    seg_cls = AdaBoostClassifier(DecisionTreeClassifier(max_depth=1), algorithm="SAMME", n_estimators=800)
 
     print("Training segmentation...")
     seg_cls.fit(train_X, train_Y)

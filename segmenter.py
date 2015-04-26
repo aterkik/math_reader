@@ -47,7 +47,6 @@ class Segmenter(object):
         pairs = zip(strokes, strokes[1:])
         decisions = []
         for pair in pairs:
-            #import pdb; pdb.set_trace()
             features = SegmenterFeatures.get_features(pair, strokes)
             features = self.min_max_scaler.transform(features)
             features = self.pca.transform(features)
@@ -80,7 +79,7 @@ class Segmenter(object):
 
 def _max_distance(coord, coords):
     coords = np.array(coords)
-    diff = coords - coord
+    diff = abs(coords - coord)
     squ = diff ** 2
     sum = squ.sum(axis=1)
     return np.sqrt(sum.max())
@@ -182,13 +181,16 @@ class SegmenterFeatures(object):
 
     @staticmethod
     def shape_context_features(strk_pair, strk_grps):
+
+        divider = max(strk_pair[0].coords.shape[1]/3, 1)
+
         center = strk_pair[0].center()
         all_coords = np.vstack((strk_pair[0].coords.T, strk_pair[1].coords.T))
         radius = _max_distance(center, all_coords)
 
         strk_pair_bin = MainBin(center, radius)
         counts = strk_pair_bin.get_count(all_coords)
-        counts = np.array(counts)/float(strk_pair[0].coords.shape[1])
+        counts = np.array(counts)/float(divider)
 
         nearest_three = _get_nearest_three(strk_pair[0], strk_grps, center)
         nearest_three = [strk_pair[0].coords.T] + [strk.coords.T for strk in nearest_three]
@@ -199,9 +201,9 @@ class SegmenterFeatures(object):
         local_radius = _max_distance(center, local_all_coords)
         local_strk_bin = MainBin(center, local_radius)
         local_counts = local_strk_bin.get_count(local_all_coords)
-        local_counts = np.array(local_counts)/float(strk_pair[0].coords.shape[1])
+        local_counts = np.array(local_counts)/float(divider)
 
-        # TODO: not using global features for now. They're slow and give only around 5% F-Measure boost
+        # # TODO: not using global features for now. They're slow and give only around 5% F-Measure boost
         # global_all_coords = tuple([strk.coords.T for strk in strk_grps])
         # global_all_coords = np.vstack(global_all_coords)
         # global_radius = _max_distance(center, global_all_coords)
@@ -209,7 +211,7 @@ class SegmenterFeatures(object):
         # global_counts = global_strk_bin.get_count(global_all_coords)
         # global_counts = np.array(global_counts)/float(strk_pair[0].coords.shape[1])
 
-        return counts.tolist() + local_counts.tolist() # + global_counts.tolist()
+        return counts.tolist() + local_counts.tolist() #+ global_counts.tolist()
 
     @staticmethod
     def _geometric_features(strk_pair, strk_grps):
@@ -317,6 +319,7 @@ class MainBin(object):
         return bins
 
     def get_count(self, coords):
+        #import pdb; pdb.set_trace()
         counts = [[0] * 12] * 5
         for bin_idx, bin in enumerate(self.bins):
             for angle_idx, angle_bin in enumerate(bin.angle_bins):
@@ -326,8 +329,8 @@ class MainBin(object):
 
                 # Discount the counts that occur in the angular bin of
                 # *smaller* circles
-                #for i in range(0, bin_idx):
-                #    total -= counts[i][angle_idx]
+                for i in range(0, bin_idx):
+                    total -= counts[i][angle_idx]
                 counts[bin_idx][angle_idx] = total
 
         final_counts = []
@@ -346,7 +349,6 @@ class Bin(object):
 
     def create_angle_bins(self):
         angle_bins = []
-        step = (self.radius*2)/12.0
 
         for quadrant in [1, 2, 3, 4]:
             for i in range(0, 3):
@@ -366,31 +368,29 @@ class AngleBin(object):
 
 
     def create_lines(self):
+        cx, cy = self.center
         r = self.radius
         i = self.idx
         if self.quadrant == 1:
             pt1 = [ (i/3.0)*r, ((3-i)/3.0)*r ]
             pt2 = [ ((i+1)/3.0)*r, ((3-(i+1))/3.0)*r ]
-        elif self.quadrant == 2:
-            pt1 = [ ((3-i)/3.0)*r, (i/3.0)*r ]
-            pt2 = [ ((3-(i+1))/3.0)*r, ((i+1)/3.0)*r ]
 
-            pt1[1] = -1*pt1[1]
-            pt2[1] = -1*pt2[1]
+            pt1 = np.array(pt1) + np.array(self.center)
+            pt2 = np.array(pt2) + np.array(self.center)
+        elif self.quadrant == 2:
+            pt1 = [ cx+(((3-i)/3.0)*r), cy-((i/3.0)*r) ]
+            pt2 = [ cx+((3-(i+1))/3.0)*r, cy-(((i+1)/3.0)*r) ]
+
         elif self.quadrant == 3:
             # Copied from 1st quadrant
-            pt1 = [ (i/3.0)*r, ((3-i)/3.0)*r ]
-            pt2 = [ ((i+1)/3.0)*r, ((3-(i+1))/3.0)*r ]
+            pt1 = [ cx-((i/3.0)*r), cy-(((3-i)/3.0)*r) ]
+            pt2 = [ cx-(((i+1)/3.0)*r), cy-(((3-(i+1))/3.0)*r) ]
 
-            pt1 = [pt1[0]*-1, pt1[1]*-1]
-            pt2 = [pt2[0]*-1, pt2[1]*-1]
         elif self.quadrant == 4:
             # Copied from 2nd quadrant
-            pt1 = [ ((3-i)/3.0)*r, (i/3.0)*r ]
-            pt2 = [ ((3-(i+1))/3.0)*r, ((i+1)/3.0)*r ]
+            pt1 = [ cx-(((3-i)/3.0)*r), cy+((i/3.0)*r) ]
+            pt2 = [ cx-(((3-(i+1))/3.0)*r), cy+(((i+1)/3.0)*r) ]
 
-            pt1[0] = -1*pt1[0]
-            pt2[0] = -1*pt2[0]
         else:
             raise Exception("Unrecognized quadrant")
 
@@ -398,7 +398,7 @@ class AngleBin(object):
         if (pt1[0]-self.center[0]) == 0:
             line1 = Line(x=pt1[0])
         else:
-            m1 = (pt1[1]-self.center[1])/(pt1[0]-self.center[0])
+            m1 = (pt1[1]-self.center[1])/float(pt1[0]-self.center[0])
             b1 = self.center[1] - (m1*self.center[0])
             line1 = Line(m=m1, b=b1)
 
@@ -406,7 +406,7 @@ class AngleBin(object):
         if (pt2[0]-self.center[0]) == 0:
             line2 = Line(x=pt2[0])
         else:
-            m2 = (pt2[1]-self.center[1])/(pt2[0]-self.center[0])
+            m2 = (pt2[1]-self.center[1])/float(pt2[0]-self.center[0])
             b2 = self.center[1] - (m2*self.center[0])
             line2 = Line(m=m2, b=b2)
 
@@ -422,6 +422,7 @@ class AngleBin(object):
         return 4
 
     def counts(self, coords):
+        #import pdb; pdb.set_trace()
         count = 0
         for coord in coords:
             if self.get_quadrant(coord) == self.quadrant:
