@@ -64,6 +64,7 @@ def main():
     # Symbol classification training
     # Should come before segmentation so that recogntion-based features can load params
     print("Loading train data (classification)...")
+    segment_inkmls_ground_truth(train_inkmls)
     train_data, _ = inkmls_to_feature_matrix(train_inkmls)
     train_X, train_Y = train_data[:,:-1], train_data[:,-1]
     rf = RandomForestClassifier(n_estimators=100, max_depth=10)
@@ -81,13 +82,13 @@ def main():
     segment_inkmls_ground_truth(train_inkmls)
     train_X, train_Y = inkmls_to_segmentation_feature_matrix(train_inkmls)
 
-    min_max_scaler = preprocessing.MinMaxScaler()
-    train_X = min_max_scaler.fit_transform(train_X)
-    joblib.dump(min_max_scaler, train_dir + '/segmentation-scaler.pkl')
+    #min_max_scaler = preprocessing.MinMaxScaler()
+    #train_X = min_max_scaler.fit_transform(train_X)
+    #joblib.dump(min_max_scaler, train_dir + '/segmentation-scaler.pkl')
 
-    pca = decomposition.PCA(n_components=min(100, train_X.shape[1]))
-    train_X = pca.fit_transform(train_X)
-    joblib.dump(pca, train_dir + '/pca.pkl')
+    #pca = decomposition.PCA(n_components=min(100, train_X.shape[1]))
+    #train_X = pca.fit_transform(train_X)
+    #joblib.dump(pca, train_dir + '/pca.pkl')
 
 
     

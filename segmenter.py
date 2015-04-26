@@ -18,8 +18,8 @@ class Segmenter(object):
     def _load_params(self):
         try:
             self.cls = joblib.load(PARAMS_DIR + 'segmentation-svc.pkl')
-            self.pca = joblib.load(PARAMS_DIR + 'pca.pkl')
-            self.min_max_scaler = joblib.load(PARAMS_DIR + 'segmentation-scaler.pkl')
+            #self.pca = joblib.load(PARAMS_DIR + 'pca.pkl')
+            #self.min_max_scaler = joblib.load(PARAMS_DIR + 'segmentation-scaler.pkl')
         except Exception as e:
             print("!!! Error: couldn't load parameter file for segmenter")
             print("!!! Try running './train_classifiers.py' first")
@@ -48,8 +48,8 @@ class Segmenter(object):
         decisions = []
         for pair in pairs:
             features = SegmenterFeatures.get_features(pair, strokes)
-            features = self.min_max_scaler.transform(features)
-            features = self.pca.transform(features)
+            #features = self.min_max_scaler.transform(features)
+            #features = self.pca.transform(features)
 
 
             pred = self.cls.predict(features)
@@ -430,7 +430,7 @@ class AngleBin(object):
                 x1, x2 = min(xs), max(xs)
 
                 #TODO: what about if exactly on the line
-                if x1 < coord[0] <= x2:
+                if x1  < coord[0] <= x2:
                     count += 1
         return count
 
