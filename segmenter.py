@@ -18,8 +18,8 @@ class Segmenter(object):
     def _load_params(self):
         try:
             self.cls = joblib.load(PARAMS_DIR + 'segmentation-svc.pkl')
-            self.pca = joblib.load(PARAMS_DIR + 'pca.pkl')
-            self.min_max_scaler = joblib.load(PARAMS_DIR + 'segmentation-scaler.pkl')
+            #self.pca = joblib.load(PARAMS_DIR + 'pca.pkl')
+            #self.min_max_scaler = joblib.load(PARAMS_DIR + 'segmentation-scaler.pkl')
         except Exception as e:
             print("!!! Error: couldn't load parameter file for segmenter")
             print("!!! Try running './train_classifiers.py' first")
@@ -48,8 +48,8 @@ class Segmenter(object):
         decisions = []
         for pair in pairs:
             features = SegmenterFeatures.get_features(pair, strokes)
-            features = self.min_max_scaler.transform(features)
-            features = self.pca.transform(features)
+            #features = self.min_max_scaler.transform(features)
+            #features = self.pca.transform(features)
 
 
             pred = self.cls.predict(features)
@@ -182,7 +182,7 @@ class SegmenterFeatures(object):
     @staticmethod
     def shape_context_features(strk_pair, strk_grps):
 
-        divider = max(strk_pair[0].coords.shape[1]/3, 1)
+        #divider = max(strk_pair[0].coords.shape[1]/3, 1)
 
         center = strk_pair[0].center()
         all_coords = np.vstack((strk_pair[0].coords.T, strk_pair[1].coords.T))
@@ -190,7 +190,7 @@ class SegmenterFeatures(object):
 
         strk_pair_bin = MainBin(center, radius)
         counts = strk_pair_bin.get_count(all_coords)
-        counts = np.array(counts)/float(divider)
+        #counts = np.array(counts)/float(divider)
 
         # nearest_three = _get_nearest_three(strk_pair[0], strk_grps, center)
         # nearest_three = [strk_pair[0].coords.T] + [strk.coords.T for strk in nearest_three]
@@ -211,7 +211,7 @@ class SegmenterFeatures(object):
         # global_counts = global_strk_bin.get_count(global_all_coords)
         # global_counts = np.array(global_counts)/float(strk_pair[0].coords.shape[1])
 
-        return counts.tolist() #+ local_counts.tolist() #+ global_counts.tolist()
+        return counts#.tolist() #+ local_counts.tolist() #+ global_counts.tolist()
 
     @staticmethod
     def _geometric_features(strk_pair, strk_grps):
@@ -322,16 +322,24 @@ class MainBin(object):
         #import pdb; pdb.set_trace()
         counts = [[0] * 12] * 5
         for bin_idx, bin in enumerate(self.bins):
+            bin_count = 0
             for angle_idx, angle_bin in enumerate(bin.angle_bins):
                 #print("BINS")
                 #import pdb; pdb.set_trace()
                 total = angle_bin.counts(coords)
 
+                bin_count += total
                 # Discount the counts that occur in the angular bin of
                 # *smaller* circles
                 for i in range(0, bin_idx):
                     total -= counts[i][angle_idx]
                 counts[bin_idx][angle_idx] = total
+
+            #print("Bin count: " + str(bin_count))
+            if bin_count > 0:
+                for idx, angle_bin in enumerate(bin.angle_bins):
+                    counts[bin_idx][idx] = counts[bin_idx][idx]/float(bin_count)
+
 
         final_counts = []
         for row in counts:
@@ -430,7 +438,7 @@ class AngleBin(object):
                 x1, x2 = min(xs), max(xs)
 
                 #TODO: what about if exactly on the line
-                if x1 < coord[0] <= x2:
+                if x1  < coord[0] <= x2:
                     count += 1
         return count
 

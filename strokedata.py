@@ -228,7 +228,7 @@ class Stroke(object):
             print(e)
             pass
 
-        return (minx+((maxx-minx)/2.0), miny+((maxy-miny)))
+        return (minx+((maxx-minx)/2.0), miny+((maxy-miny)/2.0))
 
 
 

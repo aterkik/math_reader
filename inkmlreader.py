@@ -79,8 +79,7 @@ class inkML(object):
             strk.clean()
         coords_before = self._strokes[0].coords
         self.expr_size_scaling2()
-        #XXX:TODO:self.expr_size_scaling()
-        pass
+        #coords_before = self._strokes[0].coords
 
     def expr_size_scaling2(self):
         xh,yh = (self._xmax_expr - self._xmin_expr),(self._ymax_expr - self._ymin_expr)
