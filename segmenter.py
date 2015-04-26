@@ -192,16 +192,16 @@ class SegmenterFeatures(object):
         counts = strk_pair_bin.get_count(all_coords)
         counts = np.array(counts)/float(divider)
 
-        nearest_three = _get_nearest_three(strk_pair[0], strk_grps, center)
-        nearest_three = [strk_pair[0].coords.T] + [strk.coords.T for strk in nearest_three]
-        nearest_three = tuple(nearest_three)
-        local_all_coords = np.vstack(nearest_three)
+        # nearest_three = _get_nearest_three(strk_pair[0], strk_grps, center)
+        # nearest_three = [strk_pair[0].coords.T] + [strk.coords.T for strk in nearest_three]
+        # nearest_three = tuple(nearest_three)
+        # local_all_coords = np.vstack(nearest_three)
 
 
-        local_radius = _max_distance(center, local_all_coords)
-        local_strk_bin = MainBin(center, local_radius)
-        local_counts = local_strk_bin.get_count(local_all_coords)
-        local_counts = np.array(local_counts)/float(divider)
+        # local_radius = _max_distance(center, local_all_coords)
+        # local_strk_bin = MainBin(center, local_radius)
+        # local_counts = local_strk_bin.get_count(local_all_coords)
+        # local_counts = np.array(local_counts)/float(divider)
 
         # # TODO: not using global features for now. They're slow and give only around 5% F-Measure boost
         # global_all_coords = tuple([strk.coords.T for strk in strk_grps])
@@ -211,7 +211,7 @@ class SegmenterFeatures(object):
         # global_counts = global_strk_bin.get_count(global_all_coords)
         # global_counts = np.array(global_counts)/float(strk_pair[0].coords.shape[1])
 
-        return counts.tolist() + local_counts.tolist() #+ global_counts.tolist()
+        return counts.tolist() #+ local_counts.tolist() #+ global_counts.tolist()
 
     @staticmethod
     def _geometric_features(strk_pair, strk_grps):
