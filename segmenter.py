@@ -133,12 +133,12 @@ class SegmenterFeatures(object):
 
         #import pdb;pdb.set_trace()
         # TODO: commented out until we figure out why it's driving accuracy down
-        # geo_features = SegmenterFeatures._geometric_features(strk_pair, strk_grps)
+        geo_features = SegmenterFeatures._geometric_features(strk_pair, strk_grps)
         context_features = SegmenterFeatures.shape_context_features(strk_pair, strk_grps)
         #recognition_features = SegmenterFeatures.recognition_features(strk_pair, strk_grps)
         features = context_features #+ recognition_features
         #features = geo_features + context_features
-        return features
+        return features + geo_features
     
     @staticmethod
     def recognition_features(strk_pair, strks):
@@ -219,8 +219,10 @@ class SegmenterFeatures(object):
         stroke2 = strk_pair[1]
         bb1 = BoundingBox(stroke1)
         bb2 = BoundingBox(stroke2)
-        return [parallelity(stroke1,stroke2), average_distance(stroke1,stroke2), distance_beginning_end(stroke1,stroke2), \
-                min_distance(stroke1,stroke2),bb1.distance(bb2), bb1.overlap_distance2(bb2)]
+        # return [parallelity(stroke1,stroke2), average_distance(stroke1,stroke2), distance_beginning_end(stroke1,stroke2), \
+        #         min_distance(stroke1,stroke2),bb1.distance(bb2), bb1.overlap_distance2(bb2)]
+        # print bb1.overlap(bb2)
+        return [average_distance(stroke1,stroke2), parallelity(stroke1,stroke2), min_distance(stroke1,stroke2)]
 
 
 
@@ -268,7 +270,7 @@ class BoundingBox(object):
         self.minx = mins[0]
         self.miny = mins[1]
         self.width = abs(maxs[0] - mins[0])
-        self.height = abs(maxs[1] - mins[0])
+        self.height = abs(maxs[1] - mins[1])
         self.maxx = maxs[0]
         self.maxy = maxs[1]
         self.center = np.array([self.minx + (self.width/2), self.miny + (self.height/2)])
@@ -277,6 +279,13 @@ class BoundingBox(object):
     def distance(self, other):
         return np.linalg.norm(self.center-other.center)
 
+
+    def overlap(self,other):
+        left = max(self.minx, other.minx)
+        right = min(self.maxx, other.maxx)
+        top = max(self.maxy, other.maxy)
+        bottom = max(self.miny, other.miny)
+        return (right - left) * (top - bottom)
 
     """I don't account for overlap, reason for max."""
     def min_h_distance(self, other):
