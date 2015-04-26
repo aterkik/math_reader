@@ -77,8 +77,9 @@ class inkML(object):
     def segment_preprocess(self):
         for strk in self._strokes:
             strk.clean()
-        coords_before = self._strokes[0].coords
+        #coords_before = self._strokes[0].coords
         #XXX:TODO:self.expr_size_scaling()
+        self.expr_size_scaling()
         pass
 
     def expr_size_scaling(self):
