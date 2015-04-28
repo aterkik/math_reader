@@ -92,7 +92,7 @@ def main():
 
 
     
-    seg_cls = RandomForestClassifier(n_estimators=200, max_depth=10)
+    seg_cls = RandomForestClassifier(n_estimators=500, max_depth=13)
 
     print("Training segmentation...")
     seg_cls.fit(train_X, train_Y)

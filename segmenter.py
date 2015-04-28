@@ -137,6 +137,7 @@ class SegmenterFeatures(object):
         # TODO: commented out until we figure out why it's driving accuracy down
         geo_features = SegmenterFeatures._geometric_features(strk_pair, strk_grps)
         context_features = SegmenterFeatures.shape_context_features2(strk_pair, strk_grps)
+        # context_features5 = SegmenterFeatures.shape_context_features5(strk_pair, strk_grps)
         # context_features2 = SegmenterFeatures.shape_context_features3(strk_pair, strk_grps)
         # context_features3 = SegmenterFeatures.shape_context_features4(strk_pair, strk_grps)
 
@@ -201,6 +202,46 @@ class SegmenterFeatures(object):
         radius = np.max(dists)
         radii = np.array(ratios) * radius
         angles = np.arctan2(all_coords[:,0]-center[0],all_coords[:,1]-center[1]) * (180 / np.pi)
+        angles = ((angles % 360) // 30) % 12
+
+        nv = np.zeros(dists.shape)
+        nv.fill(5.0)
+        for i in range(len(radii)):
+            test = np.zeros(dists.shape)
+            test[dists <= radii[len(radii) - 1 - i]] = 1
+            nv = nv - test
+        # print nv - 1
+        # print angles
+
+        final = ((nv) * 12) + angles
+        # print final
+        # print angles
+        # print final,dists
+        # import time
+        # time.sleep(10)
+        # print final
+        features = np.zeros(60)
+        for row in final:
+            # print row
+            features[row] += 1
+        features = features / len(all_coords)
+        return features.tolist()
+        # for i in range(len(radii)):
+        #     for j in range(12):
+        #         curr_r = radii[len(radii) - i - 1]
+
+    @staticmethod
+    def shape_context_features5(strk_pair, strk_grps,ratios=[(1.0/16.0),(1.0/8.0),(1.0/4.0),(1.0/2.0),(1.0)]):
+        stroke1 = strk_pair[0]
+        # stroke2 = strk_pair[1]
+        bb1 = BoundingBox(stroke1)
+        # bb2 = BoundingBox(stroke2)
+        center = bb1.center
+        all_coords = np.vstack((strk_pair[0].coords.T, strk_pair[1].coords.T))
+        dists = np.linalg.norm(all_coords - center,axis=1)
+        radius = np.max(dists)
+        radii = np.array(ratios) * radius
+        angles = np.arctan2(all_coords[:,0]-center[0],all_coords[:,1]-center[1]) * (180 / np.pi)
         angles = ((angles % 360) // 30) + 1
 
         nv = np.zeros(dists.shape)
@@ -212,18 +253,16 @@ class SegmenterFeatures(object):
         # print angles
 
         final = ((nv - 1) * 12) + angles
+        # print final,dists
+        # import time
+        # time.sleep(10)
         # print final
         features = np.zeros(60)
         for row in final:
             # print row
             features[row-1] += 1
         features = features / len(all_coords)
-        return features.tolist()
-        # for i in range(len(radii)):
-        #     for j in range(12):
-        #         curr_r = radii[len(radii) - i - 1]
-
-        
+        return features.tolist()      
     @staticmethod
     def shape_context_features3(strk_pair, strk_grps,ratios=[(1.0/16.0),(1.0/8.0),(1.0/4.0),(1.0/2.0),(1.0)]):
         stroke1 = strk_pair[0]
@@ -339,6 +378,7 @@ class SegmenterFeatures(object):
 
         return [parallelity(stroke1,stroke2), average_distance(stroke1,stroke2), \
                 min_distance(stroke1,stroke2),bb1.distance(bb2), bb1.overlap_distance2(bb2)]
+                # np.fabs((bb1.height * bb1.width) - (bb2.height * bb2.width))]
         # print bb1.overlap(bb2)
         # return [average_distance(stroke1,stroke2), parallelity(stroke1,stroke2), min_distance(stroke1,stroke2)]
 
@@ -357,10 +397,12 @@ def f(x, A, B): # this is your 'straight line' y=f(x)
     return A*x + B
 
 
+
+
 def average_distance(stroke1, stroke2):
     center1 = np.mean(stroke1.coords.T,axis=0)
     center2 = np.mean(stroke2.coords.T,axis=0)
-    return np.linalg.norm(center2 - center1)
+    return np.linalg.norm(center2 - center1) ** 2
 
 
 def parallelity(stroke1, stroke2):
