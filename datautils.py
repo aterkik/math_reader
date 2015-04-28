@@ -139,7 +139,7 @@ def split_dataset(inkmls, test_percentage):
     for inkml in inkmls:
         for symbol in inkml.stroke_groups:
             class_counts[symbol.target] += 1
-
+    print class_counts
     trainf_target = {}
     for sym, freq in class_counts.items():
         trainf_target[sym] = int((1 - test_percentage)*freq)
@@ -157,10 +157,10 @@ def split_dataset(inkmls, test_percentage):
     for symbol, count in sorted_targets:
         matches = get_files_with_symbol(symbol, inkmls)
 
-        if i % 2 == 0:
-            train_portion, test_portion = random_select_by_count(matches, symbol, count)
-        else:
-            test_portion, train_portion = random_select_by_count(matches, symbol, testf_target[symbol])
+        # if i % 2 == 0:
+        train_portion, test_portion = random_select_by_count(matches, symbol, count)
+        # else:
+        #     test_portion, train_portion = random_select_by_count(matches, symbol, testf_target[symbol])
 
         test_fold.extend(test_portion)
         train_fold.extend(train_portion)
@@ -197,19 +197,19 @@ def get_files_with_symbol(symbol, inkmls):
 def random_select_by_count(inkmls, symbol, count):
     """Splits inkmls into two partitions into
     approximately count and remaining files"""
+    random.shuffle(inkmls)
 
-    sorted_inkmls = sorted(inkmls,
-                    key=lambda inkml: inkml.symbol_count(symbol))
+    # sorted_inkmls = sorted(inkmls,
+    #                 key=lambda inkml: inkml.symbol_count(symbol))
     partition_count = 0
     idx = 0
-    for inkml in sorted_inkmls:
+    for inkml in inkmls:
         if partition_count >= count:
             break
         partition_count += inkml.symbol_count(symbol)
         idx += 1
 
     # shuffle items
-    random.shuffle(inkmls)
 
     return inkmls[:idx], inkmls[idx:]
 

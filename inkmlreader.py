@@ -80,7 +80,7 @@ class inkML(object):
             strk.clean()
         coords_before = self._strokes[0].coords
         self.resample()
-        # self.expr_size_scaling2()
+        self.expr_size_scaling2()
 
         #coords_before = self._strokes[0].coords
 
@@ -88,7 +88,7 @@ class inkML(object):
     def resample(self,alpha=13):
         # all_coords = []
         # other_coords = []
-        for stroke in self._strokes:
+        for ctr,stroke in enumerate(self._strokes):
             coords = stroke.coords
             L = [0]
             for i in range(1,len(coords)):
@@ -106,7 +106,8 @@ class inkML(object):
                 ny = (coords[j-1][1] + (coords[j][1] - coords[j-1][1]) * C)
                 ncoords.append([nx,ny])
             ncoords.append([coords[-1][0],coords[-1][1]])
-            stroke.coords = np.array(ncoords)
+            self._strokes[ctr].coords = np.array(ncoords)
+            
             # all_coords.extend(ncoords)
             # other_coords.extend(coords)
         # cs = np.array(all_coords)
@@ -123,7 +124,7 @@ class inkML(object):
 
     def expr_size_scaling2(self):
         xh,yh = (self._xmax_expr - self._xmin_expr),(self._ymax_expr - self._ymin_expr)
-        for strk in self._strokes:
+        for ctr,strk in enumerate(self._strokes):
             new_coords = []
             for coord in strk.coords:
                 ncoordx = ((coord[0] - self._xmin_expr) / max(xh,yh)) * 200
@@ -131,7 +132,8 @@ class inkML(object):
                 new_coords.append([ncoordx,ncoordy])
 
 
-            strk.coords = np.array(new_coords)
+            self._strokes[ctr].coords = np.array(new_coords)
+
 
 
 

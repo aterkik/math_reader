@@ -7,6 +7,8 @@ import sys
 import numpy as np
 from scipy.optimize import curve_fit
 from sklearn import preprocessing
+import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
 
 class Segmenter(object):
     total_merges = 0
@@ -134,11 +136,18 @@ class SegmenterFeatures(object):
         #import pdb;pdb.set_trace()
         # TODO: commented out until we figure out why it's driving accuracy down
         geo_features = SegmenterFeatures._geometric_features(strk_pair, strk_grps)
-        context_features = SegmenterFeatures.shape_context_features(strk_pair, strk_grps)
+        context_features = SegmenterFeatures.shape_context_features2(strk_pair, strk_grps)
+        # context_features2 = SegmenterFeatures.shape_context_features3(strk_pair, strk_grps)
+        # context_features3 = SegmenterFeatures.shape_context_features4(strk_pair, strk_grps)
+
+
+        # context_features2 = SegmenterFeatures.shape_context_features(strk_pair, strk_grps)
+        # print context_features,context_features2
+
         #recognition_features = SegmenterFeatures.recognition_features(strk_pair, strk_grps)
         features = context_features #+ recognition_features
         #features = geo_features + context_features
-        return features + geo_features
+        return features + geo_features 
     
     @staticmethod
     def recognition_features(strk_pair, strks):
@@ -178,6 +187,114 @@ class SegmenterFeatures(object):
         pair_probs = cls.predict_proba(pair_grp_features).flatten().tolist()
 
         return [max(single_probs), max(pair_probs)]
+
+
+    @staticmethod
+    def shape_context_features2(strk_pair, strk_grps,ratios=[(1.0/16.0),(1.0/8.0),(1.0/4.0),(1.0/2.0),(1.0)]):
+        stroke1 = strk_pair[0]
+        # stroke2 = strk_pair[1]
+        bb1 = BoundingBox(stroke1)
+        # bb2 = BoundingBox(stroke2)
+        center = bb1.center
+        all_coords = np.vstack((strk_pair[0].coords.T, strk_pair[1].coords.T))
+        dists = np.linalg.norm(all_coords - center,axis=1)
+        radius = np.max(dists)
+        radii = np.array(ratios) * radius
+        angles = np.arctan2(all_coords[:,0]-center[0],all_coords[:,1]-center[1]) * (180 / np.pi)
+        angles = ((angles % 360) // 30) + 1
+
+        nv = np.zeros(dists.shape)
+        for i in range(len(radii)):
+            test = np.zeros(dists.shape)
+            test[dists >= radii[i]] = 1
+            nv = nv + test
+        # print nv - 1
+        # print angles
+
+        final = ((nv - 1) * 12) + angles
+        # print final
+        features = np.zeros(60)
+        for row in final:
+            # print row
+            features[row-1] += 1
+        features = features / len(all_coords)
+        return features.tolist()
+        # for i in range(len(radii)):
+        #     for j in range(12):
+        #         curr_r = radii[len(radii) - i - 1]
+
+        
+    @staticmethod
+    def shape_context_features3(strk_pair, strk_grps,ratios=[(1.0/16.0),(1.0/8.0),(1.0/4.0),(1.0/2.0),(1.0)]):
+        stroke1 = strk_pair[0]
+        # stroke2 = strk_pair[1]
+        bb1 = BoundingBox(stroke1)
+        # bb2 = BoundingBox(stroke2)
+        center = bb1.center
+
+        nearest_three = _get_nearest_three(strk_pair[0], strk_grps, center)
+        nearest_three = [strk_pair[0].coords.T] + [strk.coords.T for strk in nearest_three]
+        nearest_three = tuple(nearest_three)
+        all_coords = np.vstack(nearest_three)
+
+        dists = np.linalg.norm(all_coords - center,axis=1)
+        radius = np.max(dists)
+        radii = np.array(ratios) * radius
+        angles = np.arctan2(all_coords[:,0]-center[0],all_coords[:,1]-center[1]) * (180 / np.pi)
+        angles = ((angles % 360) // 30) + 1
+
+        nv = np.zeros(dists.shape)
+        for i in range(len(radii)):
+            test = np.zeros(dists.shape)
+            test[dists >= radii[i]] = 1
+            nv = nv + test
+        # print nv - 1
+        # print angles
+
+        final = ((nv - 1) * 12) + angles
+        # print final
+        features = np.zeros(60)
+        for row in final:
+            # print row
+            features[row-1] += 1
+        features = features / len(all_coords)
+        return features.tolist()        
+
+
+    @staticmethod
+    def shape_context_features4(strk_pair, strk_grps,ratios=[(1.0/16.0),(1.0/8.0),(1.0/4.0),(1.0/2.0),(1.0)]):
+        stroke1 = strk_pair[0]
+        # stroke2 = strk_pair[1]
+        bb1 = BoundingBox(stroke1)
+        # bb2 = BoundingBox(stroke2)
+        center = bb1.center
+
+        global_all_coords = tuple([strk.coords.T for strk in strk_grps])
+        all_coords = np.vstack(global_all_coords)
+
+        dists = np.linalg.norm(all_coords - center,axis=1)
+        radius = np.max(dists)
+        radii = np.array(ratios) * radius
+        angles = np.arctan2(all_coords[:,0]-center[0],all_coords[:,1]-center[1]) * (180 / np.pi)
+        angles = ((angles % 360) // 30) + 1
+
+        nv = np.zeros(dists.shape)
+        for i in range(len(radii)):
+            test = np.zeros(dists.shape)
+            test[dists >= radii[i]] = 1
+            nv = nv + test
+        # print nv - 1
+        # print angles
+
+        final = ((nv - 1) * 12) + angles
+        # print final
+        features = np.zeros(60)
+        for row in final:
+            # print row
+            features[row-1] += 1
+        features = features / len(all_coords)
+        return features.tolist()     
+
 
     @staticmethod
     def shape_context_features(strk_pair, strk_grps):
@@ -219,10 +336,11 @@ class SegmenterFeatures(object):
         stroke2 = strk_pair[1]
         bb1 = BoundingBox(stroke1)
         bb2 = BoundingBox(stroke2)
-        # return [parallelity(stroke1,stroke2), average_distance(stroke1,stroke2), distance_beginning_end(stroke1,stroke2), \
-        #         min_distance(stroke1,stroke2),bb1.distance(bb2), bb1.overlap_distance2(bb2)]
+
+        return [parallelity(stroke1,stroke2), average_distance(stroke1,stroke2), \
+                min_distance(stroke1,stroke2),bb1.distance(bb2), bb1.overlap_distance2(bb2)]
         # print bb1.overlap(bb2)
-        return [average_distance(stroke1,stroke2), parallelity(stroke1,stroke2), min_distance(stroke1,stroke2)]
+        # return [average_distance(stroke1,stroke2), parallelity(stroke1,stroke2), min_distance(stroke1,stroke2)]
 
 
 

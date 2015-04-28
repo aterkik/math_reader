@@ -86,13 +86,13 @@ def main():
     #train_X = min_max_scaler.fit_transform(train_X)
     #joblib.dump(min_max_scaler, train_dir + '/segmentation-scaler.pkl')
 
-    #pca = decomposition.PCA(n_components=min(100, train_X.shape[1]))
-    #train_X = pca.fit_transform(train_X)
+    # pca = decomposition.PCA(n_components=min(100, train_X.shape[1]))
+    # train_X = pca.fit_transform(train_X)
     #joblib.dump(pca, train_dir + '/pca.pkl')
 
 
     
-    seg_cls = AdaBoostClassifier(DecisionTreeClassifier(max_depth=1), algorithm="SAMME", n_estimators=800)
+    seg_cls = RandomForestClassifier(n_estimators=200, max_depth=10)
 
     print("Training segmentation...")
     seg_cls.fit(train_X, train_Y)
