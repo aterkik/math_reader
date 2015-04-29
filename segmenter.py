@@ -38,13 +38,17 @@ class Segmenter(object):
         if not self.cls:
             self._load_params()
 
+        strokes = sorted(strokes, key=lambda strk: strk.id)
         # Only one stroke, only one partition
         if len(strokes) <= 1:
             return [StrokeGroup(strokes, 'A_1', ' ')]
 
+
         #XXX: terrible hack
         for strk in strokes:
             strk.coords = strk.coords.T
+
+
 
         pairs = zip(strokes, strokes[1:])
         decisions = []
@@ -280,24 +284,30 @@ class SegmenterFeatures(object):
         radius = np.max(dists)
         radii = np.array(ratios) * radius
         angles = np.arctan2(all_coords[:,0]-center[0],all_coords[:,1]-center[1]) * (180 / np.pi)
-        angles = ((angles % 360) // 30) + 1
+        angles = ((angles % 360) // 30) % 12
 
         nv = np.zeros(dists.shape)
+        nv.fill(5.0)
         for i in range(len(radii)):
             test = np.zeros(dists.shape)
-            test[dists >= radii[i]] = 1
-            nv = nv + test
+            test[dists <= radii[len(radii) - 1 - i]] = 1
+            nv = nv - test
         # print nv - 1
         # print angles
 
-        final = ((nv - 1) * 12) + angles
+        final = ((nv) * 12) + angles
+        # print final
+        # print angles
+        # print final,dists
+        # import time
+        # time.sleep(10)
         # print final
         features = np.zeros(60)
         for row in final:
             # print row
-            features[row-1] += 1
+            features[row] += 1
         features = features / len(all_coords)
-        return features.tolist()        
+        return features.tolist()    
 
 
     @staticmethod

@@ -325,8 +325,8 @@ class Stroke(object):
         for i, pair in enumerate(uniques):
             if i in (0, last_idx,):
                 continue
-            pair[0] = (uniques[i-1][0]+uniques[i][0]+uniques[i+1][0]) / 3.0
-            pair[1] = (uniques[i-1][1]+uniques[i][1]+uniques[i+1][1]) / 3.0
+            uniques[i][0] = (uniques[i-1][0]+uniques[i][0]+uniques[i+1][0]) / 3.0
+            uniques[i][1] = (uniques[i-1][1]+uniques[i][1]+uniques[i+1][1]) / 3.0
 
 
        

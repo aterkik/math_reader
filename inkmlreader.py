@@ -269,6 +269,8 @@ class inkML(object):
                     stroke = Stroke(trace.text.strip(), trace.attrib['id'])
                     grp.append(stroke)
             stroke_partition.append(StrokeGroup(grp, annot_id, ground_truth))
+            # stroke_partition = sorted(stroke_partition, key=lambda obj: obj)
+
         return (root, stroke_partition)
 
 

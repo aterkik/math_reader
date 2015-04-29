@@ -197,10 +197,10 @@ def get_files_with_symbol(symbol, inkmls):
 def random_select_by_count(inkmls, symbol, count):
     """Splits inkmls into two partitions into
     approximately count and remaining files"""
-    random.shuffle(inkmls)
+    # random.shuffle(inkmls)
 
-    # sorted_inkmls = sorted(inkmls,
-    #                 key=lambda inkml: inkml.symbol_count(symbol))
+    sorted_inkmls = sorted(inkmls,
+                    key=lambda inkml: inkml.symbol_count(symbol))
     partition_count = 0
     idx = 0
     for inkml in inkmls:
@@ -210,6 +210,7 @@ def random_select_by_count(inkmls, symbol, count):
         idx += 1
 
     # shuffle items
+
 
     return inkmls[:idx], inkmls[idx:]
 
