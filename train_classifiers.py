@@ -67,13 +67,13 @@ def main():
     segment_inkmls_ground_truth(train_inkmls)
     train_data, _ = inkmls_to_feature_matrix(train_inkmls)
     train_X, train_Y = train_data[:,:-1], train_data[:,-1]
-    rf = RandomForestClassifier(n_estimators=100, max_depth=10)
+    rf = RandomForestClassifier(n_estimators=300, max_depth=100)
     print("Training classification...")
     rf.fit(train_X, train_Y)
 
-    joblib.dump(rf, train_dir + '/classification-rf.pkl')
+    joblib.dump(rf, train_dir + '/classification-rf.pkl', compress=3)
     create_dir('params-recognition')
-    joblib.dump(rf, 'params-recognition/recognition-rf.pkl')
+    joblib.dump(rf, 'params-recognition/recognition-rf.pkl', compress=3)
     np.save(train_dir + '/1nnr.npy', train_data)
 
 
@@ -92,7 +92,7 @@ def main():
 
 
     
-    seg_cls = RandomForestClassifier(n_estimators=500, max_depth=13)
+    seg_cls = RandomForestClassifier(n_estimators=300, max_depth=100)
 
     print("Training segmentation...")
     seg_cls.fit(train_X, train_Y)

@@ -107,7 +107,7 @@ def main(inputdir, outputdir, nnr, bonus, inputs):
 
     train_dir = PARAMS_DIR
     if bonus:
-        train_dir = BONUS_PARAMS_DIR
+        train_dir = PARAMS_DIR
         print("Bonus round...")
 
     if file_names:
