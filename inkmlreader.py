@@ -45,7 +45,7 @@ class inkML(object):
         self.fname = fname
         self.root = None
         self.src = None #TODO: this is redundant, see self.fname.
-        self.stroke_groups = None
+        self.stroke_groups = []
         self._strokes = None
     
     def parse(self, from_ground_truth=False):
@@ -219,7 +219,12 @@ class inkML(object):
         """Reads list of strokes only. No metadata/ground truth.
         Needed for preprocessing"""
         inkml_data = open(self.fname).read()
-        root = ET.fromstring(inkml_data)
+        try:
+            root = ET.fromstring(inkml_data)
+        except:
+            print("Warning: file skipped")
+            raise e
+
         namespace = root.tag.rstrip('ink') # get namespace, bad hack!
 
         traces = root.findall(namespace + 'trace')

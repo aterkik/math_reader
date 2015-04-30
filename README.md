@@ -9,11 +9,6 @@
     --outputdir     output directory where all the .lg files will be saved (by default creates LG_output in the directory where the program is ran).
 
 
-    --nnr           runs 1-NN classifier (by default runs the main classifier, SVM) 
-
-    --bonus         runs bonus round classifier (trained on full dataset)
-
-
 
 ## Examples
 

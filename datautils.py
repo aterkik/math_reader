@@ -136,9 +136,15 @@ def split_dataset(inkmls, test_percentage):
        iteration.
     """
     class_counts = defaultdict(int)
+    bad_inkmls = []
     for inkml in inkmls:
-        for symbol in inkml.stroke_groups:
-            class_counts[symbol.target] += 1
+        try:
+            for symbol in inkml.stroke_groups:
+                class_counts[symbol.target] += 1
+        except:
+            bad_inkmls.append(inkml)
+
+    inkmls = [inkml for inkml in inkmls if inkml not in bad_inkmls]
     print class_counts
     trainf_target = {}
     for sym, freq in class_counts.items():
@@ -220,10 +226,14 @@ def segment_inkmls(inkmls):
 
     print("Using main segmenter")
     for i, inkml in enumerate(inkmls):
-        inkml.read_strokes()
-        inkml.segment_preprocess()
-        inkml.parse(from_ground_truth=False)
-        inkml.symbol_preprocess()
+        try:
+            inkml.read_strokes()
+            inkml.segment_preprocess()
+            inkml.parse(from_ground_truth=False)
+            inkml.symbol_preprocess()
+        except:
+            inkmls.remove(inkml)
+            continue
 
         if i % 5 == 0:
             print("....%.2f%% complete (segmenting)" % (100 * float(i)/total))
@@ -232,10 +242,14 @@ def segment_inkmls(inkmls):
 def segment_inkmls_ground_truth(inkmls):
     #XXX: preprocess BEFORE parse
     for inkml in inkmls:
-        inkml.read_strokes()
-        inkml.segment_preprocess()
-        inkml.parse(from_ground_truth=True)
-        inkml.symbol_preprocess()
+        try:
+            inkml.read_strokes()
+            inkml.segment_preprocess()
+            inkml.parse(from_ground_truth=True)
+            inkml.symbol_preprocess()
+        except:
+            inkmls.remove(inkml)
+            continue
 
 
 ########## End utility functions ##############

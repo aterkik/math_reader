@@ -1,6 +1,7 @@
 """
     Authors: Kevin Carbone, Andamlak Terkik
 """
+import random
 from datautils import *
 from utils import create_dir
 import numpy as np
@@ -56,7 +57,8 @@ def main():
         # Save train files
         create_dir('train_fold')
         for inkml in train_inkmls:
-            shutil.copy2(inkml.src, 'train_fold/' + os.path.basename(inkml.src))
+            name = inkml.src or inkml.fname or "".join(random.sample("abcdegfdkfsdfuwalsfsdf", 5)) + ".inkml"
+            shutil.copy2(name, 'train_fold/' + os.path.basename(name))
 
     create_dir(train_dir)
 
@@ -67,14 +69,20 @@ def main():
     segment_inkmls_ground_truth(train_inkmls)
     train_data, _ = inkmls_to_feature_matrix(train_inkmls)
     train_X, train_Y = train_data[:,:-1], train_data[:,-1]
-    rf = RandomForestClassifier(n_estimators=300, max_depth=100)
-    print("Training classification...")
-    rf.fit(train_X, train_Y)
+    try:
+        rf = RandomForestClassifier(n_estimators=100, max_depth=50)
+        np.save(train_dir + "/train.npy", train_data)
+        print("Training classification...")
+        rf.fit(train_X, train_Y)
 
-    joblib.dump(rf, train_dir + '/classification-rf.pkl', compress=3)
-    create_dir('params-recognition')
-    joblib.dump(rf, 'params-recognition/recognition-rf.pkl', compress=3)
-    np.save(train_dir + '/1nnr.npy', train_data)
+
+        joblib.dump(rf, train_dir + '/classification-rf.pkl', compress=3)
+        create_dir('params-recognition')
+        joblib.dump(rf, 'params-recognition/recognition-rf.pkl', compress=3)
+        np.save(train_dir + '/1nnr.npy', train_data)
+    except Exception as e:
+        import pdb; pdb.set_trace()
+        pass
 
 
     # Segmentation training
@@ -96,7 +104,7 @@ def main():
 
     print("Training segmentation...")
     seg_cls.fit(train_X, train_Y)
-    joblib.dump(seg_cls, train_dir + '/segmentation-svc.pkl')
+    joblib.dump(seg_cls, train_dir + '/segmentation-svc.pkl', compress=3)
 
     
 
