@@ -40,6 +40,9 @@ def main():
     src = None
     if len(sys.argv) > 1 and not sys.argv[1].startswith("--"):
         src = sys.argv[1]
+    else:
+        print("Please provide inkml directory")
+        sys.exit(1)
 
     if '--bonus' in sys.argv:
         # For bonus round, train using all data
@@ -79,7 +82,6 @@ def main():
         joblib.dump(rf, train_dir + '/classification-rf.pkl', compress=3)
         create_dir('params-recognition')
         joblib.dump(rf, 'params-recognition/recognition-rf.pkl', compress=3)
-        np.save(train_dir + '/1nnr.npy', train_data)
     except Exception as e:
         import pdb; pdb.set_trace()
         pass

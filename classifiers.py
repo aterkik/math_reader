@@ -90,13 +90,7 @@ def generate_lgs(inkmls, path):
         fname = path + os.path.basename(fname)
         open(fname, 'w+').write(inkml.get_lg())
 
-@click.command()
-@click.option('--inputdir', default='', help='Input directory containing .inkml files')
-@click.option('--outputdir', default='LG_output/', help='Output directory where .lg files are generated into')
-@click.option('--nnr', is_flag=True, help='Use 1-NN Classifier')
-@click.option('--bonus', is_flag=True, help='Run bonus round')
-@click.argument('inputs', nargs=-1)
-def main(inputdir, outputdir, nnr, bonus, inputs):
+def list_files(inputdir, inputs):
     file_names = []
     if inputdir:
         inputdir = inputdir + '/' if not inputdir.endswith('/') else inputdir
@@ -105,32 +99,24 @@ def main(inputdir, outputdir, nnr, bonus, inputs):
     if inputs:
         file_names.extend(inputs)
 
-    train_dir = PARAMS_DIR
-    if bonus:
-        train_dir = PARAMS_DIR
-        print("Bonus round...")
-
     if file_names:
         test_inkmls = get_inkml_objects(file_names, prefix='')
     else:
-        print("Using hold-out set for test data (not user-supplied)...")
-        #test_inkmls = load_testset_inkmls()
-        #inputdir = TEST_FOLD_DIR 
+        print("Using hold-out train set for test data (not user-supplied)...")
         test_inkmls = load_trainset_inkmls()
         inputdir = TRAIN_FOLD_DIR
+    return test_inkmls, inputdir
 
-    segment_inkmls(test_inkmls)
-    if nnr:
-        (preds, strk_grps) = nnr_runner(train_dir, test_inkmls)
+def segment_classify(test_inkmls, train_dir, from_gt):
+    if from_gt:
+        pass
     else:
+        segment_inkmls(test_inkmls)
         (preds, strk_grps) = rf_runner(train_dir, test_inkmls)
-        
-    for i, pred in enumerate(preds):
-        strk_grps[i].prediction = pred
+        for i, pred in enumerate(preds):
+            strk_grps[i].prediction = pred
 
-    # Now that predictions are embedded in the objects, we can generate
-    # label graphs
-    generate_lgs(test_inkmls, outputdir)
+def run_evaluate(inputdir, outputdir):
     os.system("python batch2lg.py '%s'" % inputdir)
     empty_dir('Results_%s' % outputdir)
 
@@ -138,12 +124,23 @@ def main(inputdir, outputdir, nnr, bonus, inputs):
     os.system("cat 'Results_%sSummary.txt'" % outputdir)
 
 
+@click.command()
+@click.option('--inputdir', default='', help='Input directory containing .inkml files')
+@click.option('--outputdir', default='LG_output/', help='Output directory where .lg files are generated into')
+@click.option('--bonus', is_flag=True, help='Run bonus round')
+@click.option('--from-gt', is_flag=True, help='Read segementation and symbol info from ground truth')
+@click.argument('inputs', nargs=-1)
+def main(inputdir, outputdir, bonus, from_gt, inputs):
+    test_inkmls, inputdir = list_files(inputdir, inputs)
+    train_dir = PARAMS_DIR if not bonus else BONUS_PARAMS_DIR
+
+    segment_classify(test_inkmls, train_dir, from_gt)
+    # Now that predictions are embedded in the objects, we can generate
+    # label graphs
+    generate_lgs(test_inkmls, outputdir)
+    run_evaluate(inputdir, outputdir)
+
+
 if __name__ == '__main__':
     main()
 
-
-##### Part 1 results ########
-# Using 200 inkml files (1-NNR): 73%
-# Using 200 inkml files (SVM): ~80%
-
-##### Current Results ####### 
