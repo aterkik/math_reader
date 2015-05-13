@@ -86,6 +86,8 @@ def inkmls_to_segmentation_feature_matrix(inkmls):
     Ys = []
     total = len(inkmls)
     for i, inkml in enumerate(inkmls):
+        if len(inkml.stroke_groups) <= 0:
+            continue
         features, new_ys = _segment_features(inkml.stroke_groups)
 
         if Xs.shape[0] == 0:
@@ -209,13 +211,14 @@ def random_select_by_count(inkmls, symbol, count):
                     key=lambda inkml: inkml.symbol_count(symbol))
     partition_count = 0
     idx = 0
-    for inkml in inkmls:
+    for inkml in sorted_inkmls:
         if partition_count >= count:
             break
         partition_count += inkml.symbol_count(symbol)
         idx += 1
 
     # shuffle items
+    random.shuffle(inkmls)
 
 
     return inkmls[:idx], inkmls[idx:]
