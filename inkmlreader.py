@@ -47,6 +47,15 @@ class inkML(object):
         self.src = None #TODO: this is redundant, see self.fname.
         self.stroke_groups = []
         self._strokes = None
+
+    def read_syms_from_groundt(self):
+        self.src = self.fname
+        self.root, self.stroke_groups = self._parse_inkml(
+                open(self.fname).read(), self.fname)
+        for grp in self.stroke_groups:
+            grp.prediction = grp.target
+
+
     
     def parse(self, from_ground_truth=False):
         try:

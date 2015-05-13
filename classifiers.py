@@ -109,7 +109,8 @@ def list_files(inputdir, inputs):
 
 def segment_classify(test_inkmls, train_dir, from_gt):
     if from_gt:
-        pass
+        for inkml in test_inkmls:
+            inkml.read_syms_from_groundt()
     else:
         segment_inkmls(test_inkmls)
         (preds, strk_grps) = rf_runner(train_dir, test_inkmls)
