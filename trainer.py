@@ -41,7 +41,6 @@ def load_trainset_inkmls():
     return get_inkml_objects(fnames, prefix=path)
 
 def make_train_test_split(src):
-    import pdb; pdb.set_trace()
     (train_inkmls, test_inkmls) = get_train_test_split(TEST_FRACTION, src=src)
     # Save test files
     create_dir('test_fold')
@@ -53,6 +52,62 @@ def make_train_test_split(src):
     for inkml in train_inkmls:
         name = inkml.src or inkml.fname or "".join(random.sample("abcdegfdkfsdfuwalsfsdf", 5)) + ".inkml"
         shutil.copy2(name, 'train_fold/' + os.path.basename(name))
+
+def train_symbol_classifier(train_inkmls, params_dir):
+    print("Training symbol classifier (generating features)")
+    segment_inkmls_ground_truth(train_inkmls)
+    train_data, _ = inkmls_to_symbol_feature_matrix(train_inkmls)
+    train_X, train_Y = train_data[:,:-1], train_data[:,-1]
+    try:
+        rf = RandomForestClassifier(n_estimators=100, max_depth=50)
+        np.save(params_dir + "/symbol-features.npy", train_data)
+
+        print("Fitting symbol classifier")
+        rf.fit(train_X, train_Y)
+
+        print("Saving classifier params")
+        joblib.dump(rf, params_dir + '/symbol-rf.pkl', compress=3)
+
+    except Exception as e:
+        import pdb; pdb.set_trace()
+        pass
+
+def train_segmenter(train_inkmls, params_dir):
+    print("Training segmenter")
+    segment_inkmls_ground_truth(train_inkmls)
+    train_X, train_Y = inkmls_to_segmentation_feature_matrix(train_inkmls)
+    train_data = np.column_stack((train_X, train_Y))
+    try:
+        seg_cls = RandomForestClassifier(n_estimators=300, max_depth=100)
+        np.save(params_dir + "/segmentation-features.npy", train_data)
+
+        print("Fitting segmenter...")
+        seg_cls.fit(train_X, train_Y)
+
+        print("Saving segmenter params")
+        joblib.dump(seg_cls, params_dir + '/segmentation-svc.pkl', compress=3)
+    except Exception as e:
+        import pdb; pdb.set_trace()
+        pass
+
+def train_parser(train_inmkls, params_dir):
+    print("Training parser")
+    segment_inkmls_ground_truth(train_inkmls)
+    train_X, train_Y = inkmls_to_segmentation_feature_matrix(train_inkmls)
+    train_data = np.column_stack((train_X, train_Y))
+    try:
+        seg_cls = RandomForestClassifier(n_estimators=300, max_depth=100)
+        np.save(params_dir + "/segmentation-features.npy", train_data)
+
+        print("Fitting segmenter...")
+        seg_cls.fit(train_X, train_Y)
+
+        print("Saving segmenter params")
+        joblib.dump(seg_cls, params_dir + '/segmentation-svc.pkl', compress=3)
+    except Exception as e:
+        import pdb; pdb.set_trace()
+        pass
+
 
 def main():
     """
@@ -78,45 +133,11 @@ def main():
     train_inkmls = load_trainset_inkmls()
 
     if "--classifier" in sys.argv:
-        print("Training symbol classifier (generating features)")
-        segment_inkmls_ground_truth(train_inkmls)
-        train_data, _ = inkmls_to_symbol_feature_matrix(train_inkmls)
-        train_X, train_Y = train_data[:,:-1], train_data[:,-1]
-        try:
-            rf = RandomForestClassifier(n_estimators=100, max_depth=50)
-            np.save(params_dir + "/symbol-features.npy", train_data)
-
-            print("Fitting symbol classifier")
-            rf.fit(train_X, train_Y)
-
-            print("Saving classifier params")
-            joblib.dump(rf, params_dir + '/symbol-rf.pkl', compress=3)
-
-        except Exception as e:
-            import pdb; pdb.set_trace()
-            pass
-
+        train_symbol_classifier(train_inkmls, params_dir)
     elif "--segmenter" in sys.argv:
-        print("Training segmenter")
-        segment_inkmls_ground_truth(train_inkmls)
-        train_X, train_Y = inkmls_to_segmentation_feature_matrix(train_inkmls)
-        train_data = np.column_stack((train_X, train_Y))
-        try:
-            seg_cls = RandomForestClassifier(n_estimators=300, max_depth=100)
-            np.save(params_dir + "/segmentation-features.npy", train_data)
-
-            print("Fitting segmenter...")
-            seg_cls.fit(train_X, train_Y)
-
-            print("Saving segmenter params")
-            joblib.dump(seg_cls, params_dir + '/segmentation-svc.pkl', compress=3)
-        except Exception as e:
-            import pdb; pdb.set_trace()
-            pass
-
+        train_segmenter(train_inkmls, params_dir)
     elif "--parser" in sys.argv:
-        print("Training parser")
-
+        train_parser(train_inkmls, params_dir)
     else:
         print("Please provide one of {--classifier, --segmenter, --parser}")
         sys.exit()

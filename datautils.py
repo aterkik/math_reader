@@ -102,8 +102,35 @@ def inkmls_to_segmentation_feature_matrix(inkmls):
         if i % 5 == 0:
             print("....%.2f%% complete (generating segmentation features)" % (100 * float(i)/total))
 
+    return (Xs, Ys)
+
+def inkmls_to_parser_feature_matrix(inkmls):
+    Xs = np.array([])
+    Ys = []
+    total = len(inkmls)
+    for i, inkml in enumerate(inkmls):
+        if len(inkml.stroke_groups) <= 0:
+            continue
+        features, new_ys = _parser_features(inkml.stroke_groups)
+
+        if Xs.shape[0] == 0:
+            Xs = np.array(features)
+        else:
+            # Expressions with single stroke only have no segmentation features
+            # because there is no pairing
+            if features.size > 0:
+                Xs = np.vstack((Xs, features))
+        Ys.extend(new_ys)
+
+        if i % 5 == 0:
+            print("....%.2f%% complete (generating parser features)" % (100 * float(i)/total))
 
     return (Xs, Ys)
+
+def _parser_features(stroke_groups):
+    pass
+
+
 
 def _segment_features(stroke_groups):
     Xs = np.array([])
