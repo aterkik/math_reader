@@ -39,6 +39,22 @@ def round_nearest(data,step=1):
             data[i] = data[i] - d
     return data
 
+def sort_trace_grps(tracegrps):
+    grp_ids = []
+    for grp in tracegrps:
+        key = grp.attrib.keys()[0].split('}')[0] + '}'
+        grp_id = grp.attrib[key + 'id'].strip()
+        if ':' in grp_id: # Mathbrush has ids like "4:5:6"
+            grp_id = int(grp_id.split(':')[0])
+        else:
+            grp_id = int(grp_id)
+        grp_ids.append((grp_id, grp))
+
+    # Sort by id
+    grp_ids = sorted(grp_ids, key=lambda x: x[0])
+    tracegrps = list(map(lambda x: x[1], grp_ids))
+
+
 class inkML(object):
     segmenter = Segmenter()
     def __init__(self, fname):
@@ -55,8 +71,6 @@ class inkML(object):
         for grp in self.stroke_groups:
             grp.prediction = grp.target
 
-
-    
     def parse(self, from_ground_truth=False):
         try:
             fd = open(self.fname)
@@ -67,18 +81,17 @@ class inkML(object):
         # same symbol are grouped together.
         # E.g. in [[stroke1, stroke2], [stroke3] ...] stroke1 & stroke2 make
         # one symbol and stroke3 is makes a different symbol
-        try:
-            if from_ground_truth:
-                self.root, self.stroke_groups = self._parse_inkml(fd.read(), self.fname)
-            else:
-                self.root, self.stroke_groups = self._parse_inkml_unsegmented(fd.read(), self.fname, segmenter_kind='main')
+        if from_ground_truth:
+            self.root, self.stroke_groups = self._parse_inkml(fd.read(), self.fname)
+        else:
+            self.root, self.stroke_groups = self._parse_inkml_unsegmented(fd.read(), self.fname, segmenter_kind='main')
 
-        except Exception as e:
-            print("!!! Error parsing inkml file '%s'" % self.fname)
-            print("Details: %s" % e)
-            import sys
-            sys.exit()
-            fd.close()
+        # except Exception as e:
+        #     print("!!! Error parsing inkml file '%s'" % self.fname)
+        #     print("Details: %s" % e)
+        #     import sys
+        #     sys.exit()
+        #     fd.close()
 
         self.stroke_groups = sorted(self.stroke_groups, key=lambda grp: grp.strokes[0].id)
         self.src = self.fname
@@ -89,8 +102,6 @@ class inkML(object):
         coords_before = self._strokes[0].coords
         self.resample()
         self.expr_size_scaling2()
-
-        #coords_before = self._strokes[0].coords
 
 
     def resample(self,alpha=13):
@@ -141,9 +152,6 @@ class inkML(object):
 
 
             self._strokes[ctr].coords = np.array(new_coords)
-
-
-
 
 
     def expr_size_scaling(self):
@@ -256,7 +264,11 @@ class inkML(object):
 
         stroke_partition = []
         traces = root.findall(np + 'trace')
+
         tracegrps = root.findall('%straceGroup/%straceGroup' % (np, np))
+
+        # Sort tracegroups based on id. Needed for relationship processing
+        sort_trace_grps(tracegrps)
 
         for i, trgrp in enumerate(tracegrps):
             trids = map(lambda trv: trv.attrib['traceDataRef'], trgrp.findall(np + 'traceView'))
