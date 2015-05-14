@@ -56,7 +56,7 @@ def get_inkml_objects(inkml_file_names, prefix=TRAIN_PATH):
     return inkmls
 
 
-def inkmls_to_feature_matrix(inkmls):
+def inkmls_to_symbol_feature_matrix(inkmls):
     symbols = []
     for inkml in inkmls:
         symbols.extend(inkml.stroke_groups)
