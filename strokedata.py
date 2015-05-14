@@ -17,7 +17,7 @@ class StrokeGroup(object):
     symbols_ops = ['(', ')', '+', '-', '.', '=', '[', ']',
                    '\geq', '\gt', '\infty', '\int', '\lambda',
                    '\leq', '\lt', '\neq', '\sqrt']
-    def __init__(self, strokes, annot_id, target):
+    def __init__(self, strokes, annot_id, target, grp_id):
         self.strokes = strokes
         # Sort strokes by id which corresponds to the order at which they were written
         self.strokes = sorted(self.strokes, key=lambda strk: strk.id)
@@ -29,6 +29,7 @@ class StrokeGroup(object):
 
         self.xmin, self.xmax = None, None
         self.ymin, self.ymax = None, None
+        self.grp_id = grp_id
 
 
     def bounding_box(self):

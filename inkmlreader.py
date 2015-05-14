@@ -293,7 +293,10 @@ class inkML(object):
                 if trace.attrib['id'] in trids:
                     stroke = Stroke(trace.text.strip(), trace.attrib['id'])
                     grp.append(stroke)
-            stroke_partition.append(StrokeGroup(grp, annot_id, ground_truth))
+
+            key = trgrp.attrib.keys()[0].split('}')[0] + '}'
+            grp_id = trgrp.attrib[key + 'id'].strip()
+            stroke_partition.append(StrokeGroup(grp, annot_id, ground_truth, grp_id))
             # stroke_partition = sorted(stroke_partition, key=lambda obj: obj)
 
         return (root, stroke_partition)
