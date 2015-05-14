@@ -12,6 +12,11 @@ class BBox(object):
         self.center = center
 
 class StrokeGroup(object):
+    # List of symbols + operators. Used for calculating normalized
+    # size (different methods for different classes)
+    symbols_ops = ['(', ')', '+', '-', '.', '=', '[', ']',
+                   '\geq', '\gt', '\infty', '\int', '\lambda',
+                   '\leq', '\lt', '\neq', '\sqrt']
     def __init__(self, strokes, annot_id, target):
         self.strokes = strokes
         # Sort strokes by id which corresponds to the order at which they were written
@@ -39,9 +44,30 @@ class StrokeGroup(object):
         height = abs(maxs[1] - mins[1])
         maxx = maxs[0]
         maxy = maxs[1]
-        center = np.array([minx + (width/2), miny + (height/2)])
+        center = np.array([minx + (width/2.0), miny + (height/2.0)])
         return BBox(minx, miny, maxx, maxy, width, height, center)
 
+    def NSizeCenter(self, target):
+        bbox = self.bounding_box()
+
+        # From the paper: "normalized size of operators and symbols,
+        # we define it to be the max of the height and the width of
+        # their bounding rectangles"
+        if target in self.symbols_ops:
+            nsize = max(bbox.width, bbox.height)
+        else:
+            nsize = bbox.height
+
+        return nsize, bbox.center
+
+    def get_HD(self, other_strk_grp, target1, target2):
+        h1, c1 = self.NSizeCenter(target1)
+        h2, c2 = other_strk_grp.NSizeCenter(target2)
+
+        H = 1000 * h1/float(h2)
+        D = 1000 * (c1-c2)/float(h1)
+
+        return H, D
 
     def get_coords(self):
         all_coords = []

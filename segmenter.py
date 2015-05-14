@@ -443,7 +443,7 @@ class BoundingBox(object):
         self.height = abs(maxs[1] - mins[1])
         self.maxx = maxs[0]
         self.maxy = maxs[1]
-        self.center = np.array([self.minx + (self.width/2), self.miny + (self.height/2)])
+        self.center = np.array([self.minx + (self.width/2.0), self.miny + (self.height/2.0)])
     
 
     def distance(self, other):

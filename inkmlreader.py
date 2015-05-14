@@ -74,11 +74,10 @@ class inkML(object):
                 self.root, self.stroke_groups = self._parse_inkml_unsegmented(fd.read(), self.fname, segmenter_kind='main')
 
         except Exception as e:
-            #import pdb; pdb.set_trace()
             print("!!! Error parsing inkml file '%s'" % self.fname)
             print("Details: %s" % e)
-            raise e
-        finally:
+            import sys
+            sys.exit()
             fd.close()
 
         self.stroke_groups = sorted(self.stroke_groups, key=lambda grp: grp.strokes[0].id)
