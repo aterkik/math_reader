@@ -1,6 +1,16 @@
 import numpy as np
 from utils import Line, get_line_crossing, generate_subcrossings
 
+class BBox(object):
+    def __init__(self, minx, miny, maxx, maxy, width, height, center):
+        self.minx = minx
+        self.miny = miny
+        self.maxx = maxx
+        self.maxy = maxy
+        self.width = width
+        self.height = height
+        self.center = center
+
 class StrokeGroup(object):
     def __init__(self, strokes, annot_id, target):
         self.strokes = strokes
@@ -14,6 +24,24 @@ class StrokeGroup(object):
 
         self.xmin, self.xmax = None, None
         self.ymin, self.ymax = None, None
+
+
+    def bounding_box(self):
+        all_coords = self.strokes[0].coords
+        for strk in self.strokes[1:]:
+            all_coords = np.vstack((all_coords, strk.coords))
+
+        mins = np.amin(all_coords,axis=0)
+        maxs = np.amax(all_coords,axis=0)
+        minx = mins[0]
+        miny = mins[1]
+        width = abs(maxs[0] - mins[0])
+        height = abs(maxs[1] - mins[1])
+        maxx = maxs[0]
+        maxy = maxs[1]
+        center = np.array([minx + (width/2), miny + (height/2)])
+        return BBox(minx, miny, maxx, maxy, width, height, center)
+
 
     def get_coords(self):
         all_coords = []
