@@ -316,8 +316,8 @@ class inkML(object):
 
     def get_relation_candids(self):
         rels = []
-        # K next number of strokes to consider
-        k_next = 5
+        # TODO:XXX:SIGNIGICANTLY affects recogntion rates
+        k_next = 1
         for i, grp in enumerate(self.stroke_groups):
             candids = self.stroke_groups[i+1:i+k_next+1]
             rels.extend(list(zip([grp]*k_next, candids, [' ']*k_next)))
