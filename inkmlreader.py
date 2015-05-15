@@ -235,6 +235,11 @@ class inkML(object):
 
         for edge in self.mst_edges:
             grp1, grp2 = edge[0], edge[1]
+            if self.stroke_groups.index(grp1) > self.stroke_groups.index(grp2):
+                # left-to-right relation. Should neva happen!
+                grp1, grp2 = grp2, grp1
+                print("reversed edge..")
+                pass
             try:
                 rel = self.mst[grp1][grp2]['rel']
             except:
