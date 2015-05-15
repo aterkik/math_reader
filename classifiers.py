@@ -137,10 +137,13 @@ def parse_items(inkmls, params_dir):
 
         features, _ = features[:,:-1], features[:,-1]
         rels = []
+        classes = rf.classes_
         for row in features:
-            y_prime = rf.predict(np.array(row,dtype=float))
-            rels.append(y_prime)
-            print(y_prime)
+            probs = rf.predict_proba(np.array(row,dtype=float))[0]
+            res = sorted(zip(classes, probs.tolist()), key=lambda x: x[1])
+            res = list(reversed(res))
+            y_primes = list(res[:3])
+            rels.append(y_primes)
         inkml.set_pred_relations(candids, rels)
         # TODO: pick MST using confidence score
 

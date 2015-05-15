@@ -8,6 +8,7 @@ from segmenter import Segmenter
 import matplotlib.pyplot as plt
 import os
 import random
+import networkx as nx
 
 """
     Usage:
@@ -80,6 +81,8 @@ class inkML(object):
         self.grp_by_id = {}
         self.relations = []
         self.pred_relations = []
+        self.mst = {}
+        self.mst_edges = {}
 
     def parse(self, from_ground_truth=False):
         try:
@@ -229,10 +232,18 @@ class inkML(object):
         out = "\n".join(outs)
 
         rels = []
-        for rel in self.pred_relations:
-            grp1, grp2, r = rel
+
+        for edge in self.mst_edges:
+            grp1, grp2 = edge[0], edge[1]
+            try:
+                rel = self.mst[grp1][grp2]['rel']
+            except:
+                import pdb; pdb.set_trace()
+                pass
+
             rels.append("R, %s, %s, %s, 1.0" % (
-                        grp1.annot_id, grp2.annot_id, r))
+                            grp1.annot_id, grp2.annot_id, rel))
+
         rels = "\n".join(rels)
         inbetween = "\n\n# [ RELATIONSHIPS ]\n"
         return out + inbetween + rels
@@ -290,11 +301,18 @@ class inkML(object):
             raise Exception("couldn't find id/annot")
         return grp1
 
-    def set_pred_relations(self, candids, rels):
+    def set_pred_relations(self, candids, relations):
+        #NOTE: digraph doesn't play well with MST algorithms in networkx
+        self.G = nx.MultiGraph()
         pred_rels = []
-        for candid, rel in zip(candids, rels):
-            pred_rels.append(tuple(list(candid[:-1]) + rel.tolist()))
-        self.pred_relations = pred_rels
+        for candid, subrels in zip(candids, relations):
+            for rel, w in subrels:
+                # Don't forget to do 1-w (since we're looking for minimum)
+                self.G.add_edge(candid[0], candid[1], weight=(1-w), rel=rel.tolist())
+
+        T = nx.minimum_spanning_tree(self.G)
+        self.mst_edges = set(T.edges())  # optimization
+        self.mst = T
 
     def get_relation_candids(self):
         rels = []
@@ -306,7 +324,7 @@ class inkML(object):
         return rels
 
     def get_relations(self, force_read=False):
-        if self.relations != None and not force_read:
+        if len(self.relations) > 0 and not force_read:
             return self.relations
 
         name_parts = self.fname.replace("inkml", "lg").split(".")
