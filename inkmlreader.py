@@ -78,14 +78,8 @@ class inkML(object):
         self.stroke_groups = []
         self._strokes = None
         self.grp_by_id = {}
-        self.relations = None
-
-    def read_syms_from_groundt(self):
-        self.src = self.fname
-        self.root, self.stroke_groups = self._parse_inkml(
-                open(self.fname).read(), self.fname)
-        for grp in self.stroke_groups:
-            grp.prediction = grp.target
+        self.relations = []
+        self.pred_relations = []
 
     def parse(self, from_ground_truth=False):
         try:
@@ -233,8 +227,15 @@ class inkML(object):
             outs.append("O, %s, %s, 1.0, %s" % (
                         grp.annot_id, grp.prediction, grp.strk_ids()))
         out = "\n".join(outs)
-        # TODO: relationships
-        return out
+
+        rels = []
+        for rel in self.pred_relations:
+            grp1, grp2, r = rel
+            rels.append("R, %s, %s, %s, 1.0" % (
+                        grp1.annot_id, grp2.annot_id, r))
+        rels = "\n".join(rels)
+        inbetween = "\n\n# [ RELATIONSHIPS ]\n"
+        return out + inbetween + rels
 
     @staticmethod
     def _parse_inkml_unsegmented(inkml_data, fname, segmenter_kind='baseline'):
@@ -288,6 +289,21 @@ class inkML(object):
         else:
             raise Exception("couldn't find id/annot")
         return grp1
+
+    def set_pred_relations(self, candids, rels):
+        pred_rels = []
+        for candid, rel in zip(candids, rels):
+            pred_rels.append(tuple(list(candid[:-1]) + rel.tolist()))
+        self.pred_relations = pred_rels
+
+    def get_relation_candids(self):
+        rels = []
+        # K next number of strokes to consider
+        k_next = 5
+        for i, grp in enumerate(self.stroke_groups):
+            candids = self.stroke_groups[i+1:i+k_next+1]
+            rels.extend(list(zip([grp]*k_next, candids, [' ']*k_next)))
+        return rels
 
     def get_relations(self, force_read=False):
         if self.relations != None and not force_read:

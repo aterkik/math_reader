@@ -111,7 +111,12 @@ def inkmls_to_parser_feature_matrix(inkmls):
     for i, inkml in enumerate(inkmls):
         if len(inkml.stroke_groups) <= 0:
             continue
-        features, new_ys = _parser_features(inkml)
+        features = parser_features(inkml.get_relations())
+
+        if features.size  == 0:
+            continue
+
+        features, ys = features[:,:-1], features[:,-1]
 
         if Xs.shape[0] == 0:
             Xs = np.array(features)
@@ -120,16 +125,15 @@ def inkmls_to_parser_feature_matrix(inkmls):
             # because there is no pairing
             if features.size > 0:
                 Xs = np.vstack((Xs, features))
-        Ys.extend(new_ys)
+        Ys.extend(ys)
 
         if i % 5 == 0:
             print("....%.2f%% complete (generating parser features)" % (100 * float(i)/total))
 
     return (Xs, Ys)
 
-def _parser_features(inkml):
-    rels = inkml.get_relations()
-    feats, ys = [], []
+def parser_features(rels):
+    feats = []
     indices = {"AA": 0, "AO": 1, "IA": 2, "BA": 3}
     for rel_items in rels:
         grp1, grp2, rel = rel_items
@@ -142,10 +146,9 @@ def _parser_features(inkml):
         char_class = get_pair_class(grp1.target, grp2.target)
         minuses[indices[char_class]] = 1
 
-        feats.append([H, D] + minuses)
-        ys.append(rel)
+        feats.append([H, D] + minuses + [rel])
 
-    return np.array(feats), ys
+    return np.array(feats)
 
 def get_pair_class(first, second):
     fs = relation_class(first) + relation_class(second)

@@ -85,7 +85,7 @@ def train_segmenter(train_inkmls, params_dir):
         seg_cls.fit(train_X, train_Y)
 
         print("Saving segmenter params")
-        joblib.dump(seg_cls, params_dir + '/segmentation-svc.pkl', compress=3)
+        joblib.dump(seg_cls, params_dir + '/segmentation-rf.pkl', compress=3)
     except Exception as e:
         import pdb; pdb.set_trace()
         pass
@@ -103,7 +103,7 @@ def train_parser(train_inkmls, params_dir):
         seg_cls.fit(train_X, train_Y)
 
         print("Saving parser params")
-        joblib.dump(seg_cls, params_dir + '/parser-svc.pkl', compress=3)
+        joblib.dump(seg_cls, params_dir + '/parser-rf.pkl', compress=3)
     except Exception as e:
         import pdb; pdb.set_trace()
         pass

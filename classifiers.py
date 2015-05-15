@@ -109,8 +109,10 @@ def list_files(inputdir, inputs):
 
 def segment_classify(test_inkmls, train_dir, from_gt):
     if from_gt:
+        segment_inkmls_ground_truth(test_inkmls)
         for inkml in test_inkmls:
-            inkml.read_syms_from_groundt()
+            for grp in inkml.stroke_groups:
+                grp.prediction = grp.target
     else:
         segment_inkmls(test_inkmls)
         (preds, strk_grps) = rf_runner(train_dir, test_inkmls)
@@ -125,6 +127,24 @@ def run_evaluate(inputdir, outputdir):
     os.system("cat 'Results_%sSummary.txt'" % outputdir)
 
 
+def parse_items(inkmls, params_dir):
+    rf = joblib.load(params_dir + 'parser-rf.pkl')
+    for inkml in inkmls:
+        candids = inkml.get_relation_candids()
+        features = parser_features(candids)
+        if features.size == 0:
+            continue
+
+        features, _ = features[:,:-1], features[:,-1]
+        rels = []
+        for row in features:
+            y_prime = rf.predict(np.array(row,dtype=float))
+            rels.append(y_prime)
+            print(y_prime)
+        inkml.set_pred_relations(candids, rels)
+        # TODO: pick MST using confidence score
+
+
 @click.command()
 @click.option('--inputdir', default='', help='Input directory containing .inkml files')
 @click.option('--outputdir', default='LG_output/', help='Output directory where .lg files are generated into')
@@ -133,9 +153,10 @@ def run_evaluate(inputdir, outputdir):
 @click.argument('inputs', nargs=-1)
 def main(inputdir, outputdir, bonus, from_gt, inputs):
     test_inkmls, inputdir = list_files(inputdir, inputs)
-    train_dir = PARAMS_DIR if not bonus else BONUS_PARAMS_DIR
+    params_dir = PARAMS_DIR if not bonus else BONUS_PARAMS_DIR
 
-    segment_classify(test_inkmls, train_dir, from_gt)
+    segment_classify(test_inkmls, params_dir, from_gt)
+    parse_items(test_inkmls, params_dir)
     # Now that predictions are embedded in the objects, we can generate
     # label graphs
     generate_lgs(test_inkmls, outputdir)
