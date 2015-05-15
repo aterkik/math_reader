@@ -33,9 +33,13 @@ class StrokeGroup(object):
 
 
     def bounding_box(self):
-        all_coords = self.strokes[0].coords
+        all_coords = self.strokes[0].coords.T
         for strk in self.strokes[1:]:
-            all_coords = np.vstack((all_coords, strk.coords))
+            try:
+                all_coords = np.vstack((all_coords, strk.coords.T))
+            except:
+                import pdb; pdb.set_trace()
+                pass
 
         mins = np.amin(all_coords,axis=0)
         maxs = np.amax(all_coords,axis=0)
@@ -59,7 +63,9 @@ class StrokeGroup(object):
         else:
             nsize = bbox.height
 
-        return nsize, bbox.center
+        # Paper specifies vertical coordinate of normalized center
+        #TODO: expierment with both coordinates since it doesn't hurt out method
+        return nsize, bbox.center[1]
 
     def get_HD(self, other_strk_grp, target1, target2):
         h1, c1 = self.NSizeCenter(target1)

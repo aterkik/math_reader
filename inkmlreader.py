@@ -6,6 +6,8 @@ import numpy as np
 from strokedata import Stroke, StrokeGroup
 from segmenter import Segmenter
 import matplotlib.pyplot as plt
+import os
+import random
 
 """
     Usage:
@@ -39,6 +41,10 @@ def round_nearest(data,step=1):
             data[i] = data[i] - d
     return data
 
+capitals = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+def rand_str(k=4):
+    return "".join(random.sample(capitals,k))
+
 def sort_trace_grps(tracegrps):
     grp_ids = []
     for grp in tracegrps:
@@ -57,12 +63,22 @@ def sort_trace_grps(tracegrps):
 
 class inkML(object):
     segmenter = Segmenter()
+    rel_alphabets = list('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789')
+    rel_alphabets = rel_alphabets + ['\Delta','\\alpha','\\beta','\cos','\gamma',
+                    '\infty', '\lambda', '\log', '\mu', '\phi', '\pi',
+                    '\sigma', '\sin', '\sum', '\\tan', '\\theta']
+    rel_ops = list('()+-.=[]') + ['\geq','\gt','\leq','\lt','\\neq']
+    rel_integrals = ['\int']
+    rel_big_ops = ['\sigma', '\sqrt']
+
     def __init__(self, fname):
         self.fname = fname
         self.root = None
         self.src = None #TODO: this is redundant, see self.fname.
         self.stroke_groups = []
         self._strokes = None
+        self.grp_by_id = {}
+        self.relations = None
 
     def read_syms_from_groundt(self):
         self.src = self.fname
@@ -95,6 +111,13 @@ class inkML(object):
 
         self.stroke_groups = sorted(self.stroke_groups, key=lambda grp: grp.strokes[0].id)
         self.src = self.fname
+
+        self.grp_by_id = {}
+        self.grp_by_annot = {}
+        for grp in self.stroke_groups:
+            self.grp_by_id[grp.grp_id] = grp
+            self.grp_by_annot[grp.annot_id] = grp
+
 
     def segment_preprocess(self):
         for strk in self._strokes:
@@ -254,7 +277,53 @@ class inkML(object):
         [self._xmax_expr, self._ymax_expr] = np.max([strk.coords.max(axis=0)
                             for strk in self._strokes], axis=0)
 
+    def grp_from_id(self, id1):
+        id_keys = self.grp_by_id.keys()
+        annot_keys = self.grp_by_annot.keys()
+        grp1 = None
+        if id1 in id_keys:
+            grp1 = self.grp_by_id[id1]
+        elif id1 in annot_keys:
+            grp1 = self.grp_by_annot[id1]
+        else:
+            raise Exception("couldn't find id/annot")
+        return grp1
 
+    def get_relations(self, force_read=False):
+        if self.relations != None and not force_read:
+            return self.relations
+
+        name_parts = self.fname.replace("inkml", "lg").split(".")
+        new_name = name_parts[0] + rand_str() + "." + name_parts[1]
+        os.system('crohme2lg "%s" "%s"' % (self.fname, new_name))
+
+        lg_content = open(new_name).read()
+        rel_lines = list(filter(lambda x: x.strip().startswith("R,"),
+                            lg_content.splitlines()))
+        rels = []
+        outs = []
+        for line in rel_lines:
+            # e.g. "R, 1, 2, Sup, 1.0"
+            _, id1, id2, rel, _ = list(map(lambda x: x.strip(), line.split(",")))
+            try:
+                grp1, grp2 = self.grp_from_id(id1), self.grp_from_id(id2)
+                rels.append((grp1, grp2, rel))
+                outs.append(str(grp1) + " " + str(grp2) + " " + rel)
+            except Exception as e:
+                import pdb; pdb.set_trace()
+                pass
+
+        print("==============================")
+        print(self.fname, new_name)
+        print("\n".join(rel_lines))
+        print("\n".join(outs))
+
+        print("==============================\n\n")
+
+        os.unlink(new_name)
+        # Save for later
+        self.relations = rels
+        return self.relations
 
 
     @staticmethod

@@ -90,20 +90,20 @@ def train_segmenter(train_inkmls, params_dir):
         import pdb; pdb.set_trace()
         pass
 
-def train_parser(train_inmkls, params_dir):
+def train_parser(train_inkmls, params_dir):
     print("Training parser")
     segment_inkmls_ground_truth(train_inkmls)
-    train_X, train_Y = inkmls_to_segmentation_feature_matrix(train_inkmls)
+    train_X, train_Y = inkmls_to_parser_feature_matrix(train_inkmls)
     train_data = np.column_stack((train_X, train_Y))
     try:
         seg_cls = RandomForestClassifier(n_estimators=300, max_depth=100)
-        np.save(params_dir + "/segmentation-features.npy", train_data)
+        np.save(params_dir + "/parser-features.npy", train_data)
 
-        print("Fitting segmenter...")
+        print("Fitting parser...")
         seg_cls.fit(train_X, train_Y)
 
-        print("Saving segmenter params")
-        joblib.dump(seg_cls, params_dir + '/segmentation-svc.pkl', compress=3)
+        print("Saving parser params")
+        joblib.dump(seg_cls, params_dir + '/parser-svc.pkl', compress=3)
     except Exception as e:
         import pdb; pdb.set_trace()
         pass

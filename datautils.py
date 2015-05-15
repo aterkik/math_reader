@@ -111,7 +111,7 @@ def inkmls_to_parser_feature_matrix(inkmls):
     for i, inkml in enumerate(inkmls):
         if len(inkml.stroke_groups) <= 0:
             continue
-        features, new_ys = _parser_features(inkml.stroke_groups)
+        features, new_ys = _parser_features(inkml)
 
         if Xs.shape[0] == 0:
             Xs = np.array(features)
@@ -127,9 +127,65 @@ def inkmls_to_parser_feature_matrix(inkmls):
 
     return (Xs, Ys)
 
-def _parser_features(stroke_groups):
+def _parser_features(inkml):
+    rels = inkml.get_relations()
+    feats, ys = [], []
+    indices = {"AA": 0, "AO": 1, "IA": 2, "BA": 3}
+    for rel_items in rels:
+        grp1, grp2, rel = rel_items
+        H, D = grp1.get_HD(grp2, grp1.target, grp2.target)
+
+        # When mixing descrete features with continuous features
+        # it's best to use a k-valued binary vector to represnt them
+        # see: http://stats.stackexchange.com/a/83086
+        minuses = [-1, -1, -1, -1]
+        char_class = get_pair_class(grp1.target, grp2.target)
+        minuses[indices[char_class]] = 1
+
+        feats.append([H, D] + minuses)
+        ys.append(rel)
+
+    return np.array(feats), ys
+
+def get_pair_class(first, second):
+    fs = relation_class(first) + relation_class(second)
+    if fs == "AA":
+        return "AA"
+    if fs in ("AO", "OA"):
+        return "AO"
+    if fs in ("IA", "AI"):
+        return "IA"
+    if fs in ("BA", "AB"):
+        return "BA"
+
+
+    #TODO:XXX:NOTE:divergence from paper
+    if fs in ("IO", "OI"):
+        return "IA"
+    if fs in ("OB", "BO"):
+        return "AO"
+    if fs in ("BB"):
+        return "BA"
+    if fs in ("OO"): # e.g. "( 5/2)" b/n ( and -
+        return "AO" # XXX: EXPERIMENT: TODO
+
+    print("Unspecified pair relation")
+    import pdb; pdb.set_trace()
     pass
 
+def relation_class(char):
+    if char in inkML.rel_alphabets:
+        return 'A'
+    if char in inkML.rel_ops:
+        return 'O'
+    if char in inkML.rel_integrals:
+        return 'I'
+    if char in inkML.rel_big_ops:
+        return 'B'
+
+    print("unknown relation class")
+    import pdb; pdb.set_trace()
+    pass
 
 
 def _segment_features(stroke_groups):
