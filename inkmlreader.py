@@ -10,6 +10,7 @@ import os
 import random
 import networkx as nx
 from collections import defaultdict
+from settings import USE_REJECT_CLASS_PARSER
 
 """
     Usage:
@@ -69,7 +70,7 @@ class inkML(object):
     rel_alphabets = rel_alphabets + ['\Delta','\\alpha','\\beta','\cos','\gamma',
                     '\infty', '\lambda', '\log', '\mu', '\phi', '\pi',
                     '\sigma', '\sin', '\sum', '\\tan', '\\theta']
-    rel_ops = list('()+-.=[]') + ['\geq','\gt','\leq','\lt','\\neq']
+    rel_ops = list('()+-.=[]') + ['\geq','\gt','\leq','\lt','\\neq', '\prime', ',', '\COMMA', '|', '\ldots', '!', '\pm']
     rel_integrals = ['\int']
     rel_big_ops = ['\sigma', '\sqrt']
 
@@ -227,6 +228,8 @@ class inkML(object):
         for grp in self.stroke_groups:
             if ',' in grp.prediction:
                 grp.prediction = "COMMA"
+            if ',' in grp.annot_id:
+                grp.annot_id = grp.annot_id.replace(",", "COMMA")
             #pr = '\,' if grp.prediction == ',' else grp.prediction
             outs.append("O, %s, %s, 1.0, %s" % (
                         grp.annot_id, grp.prediction, grp.strk_ids()))
@@ -244,6 +247,9 @@ class inkML(object):
             except:
                 import pdb; pdb.set_trace()
                 pass
+
+            grp1.annot_id = grp1.annot_id.replace(",", "COMMA")
+            grp2.annot_id = grp2.annot_id.replace(",", "COMMA")
 
             rels.append("R, %s, %s, %s, 1.0" % (
                             grp1.annot_id, grp2.annot_id, rel))
@@ -294,6 +300,9 @@ class inkML(object):
                             for strk in self._strokes], axis=0)
 
     def grp_from_id(self, id1):
+        if ',' in id1:
+            id1 = id1.replace(",", "COMMA")
+
         id_keys = self.grp_by_id.keys()
         annot_keys = self.grp_by_annot.keys()
         grp1 = None
@@ -331,7 +340,7 @@ class inkML(object):
     def get_relation_candids(self):
         rels = []
         # TODO:XXX: k_next SIGNIGICANTLY affects recogntion rates
-        k_next = 2
+        k_next = 1
         for i, grp in enumerate(self.stroke_groups):
             candids = self.stroke_groups[i+1:i+k_next+1]
             rels.extend(list(zip([grp]*k_next, candids, [' ']*k_next)))
@@ -364,22 +373,23 @@ class inkML(object):
                     import pdb; pdb.set_trace()
                     pass
 
-            strks = self.stroke_groups
-            for grp in rel_dicts.keys():
-                negative = rel_dicts[grp]
-                idx = self.stroke_groups.index(grp)
-                diff_grps = set(self.stroke_groups[idx+1:]) - set(negative)
-                for rel_grp in diff_grps:
-                    # X is basically our 'reject' relationship
-                    rels.append((grp, rel_grp, 'X'))
-                    outs.append(str(grp) + " " + str(rel_grp) + " X")
+            if USE_REJECT_CLASS_PARSER:
+                strks = self.stroke_groups
+                for grp in rel_dicts.keys():
+                    negative = rel_dicts[grp]
+                    idx = self.stroke_groups.index(grp)
+                    diff_grps = set(self.stroke_groups[idx+1:]) - set(negative)
+                    for rel_grp in diff_grps:
+                        # X is basically our 'reject' relationship
+                        rels.append((grp, rel_grp, 'X'))
+                        outs.append(str(grp) + " " + str(rel_grp) + " X")
 
-            print("==============================")
-            print(self.fname, new_name)
-            print("\n".join(rel_lines))
-            print("\n".join(outs))
+            # print("==============================")
+            # print(self.fname, new_name)
+            # print("\n".join(rel_lines))
+            # print("\n".join(outs))
 
-            print("==============================\n\n")
+            # print("==============================\n\n")
 
             # Save for later
             self.relations = rels
@@ -417,6 +427,8 @@ class inkML(object):
                 print("!! Warning: couldn't find annotationXML for tracegroup"
                       " in file %s" % fname)
                 annot_id = "u_" + str(i)
+
+            annot_id = annot_id.replace(",", "COMMA")
 
             grp = []
             # TODO: inefficent loop!

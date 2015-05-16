@@ -186,7 +186,7 @@ def relation_class(char):
         return 'B'
 
     print("!!! WARNING: unknown relation class '%s'" % char)
-    return 'A'
+    return 'O'
 
 
 def _segment_features(stroke_groups):
