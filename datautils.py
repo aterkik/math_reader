@@ -111,7 +111,7 @@ def inkmls_to_parser_feature_matrix(inkmls):
     for i, inkml in enumerate(inkmls):
         if len(inkml.stroke_groups) <= 0:
             continue
-        features = parser_features(inkml.get_relations())
+        features = parser_features(inkml.get_relations_for_train())
 
         if features.size  == 0:
             continue
@@ -163,7 +163,7 @@ def get_pair_class(first, second):
 
 
     #TODO:XXX:NOTE:divergence from paper
-    if fs in ("IO", "OI"):
+    if fs in ("IO", "OI", "IB", "BI"):
         return "IA"
     if fs in ("OB", "BO"):
         return "AO"
@@ -172,9 +172,8 @@ def get_pair_class(first, second):
     if fs in ("OO"): # e.g. "( 5/2)" b/n ( and -
         return "AO" # XXX: EXPERIMENT: TODO
 
-    print("Unspecified pair relation")
-    import pdb; pdb.set_trace()
-    pass
+    print("!!!WARNING: Unspecified pair relation '%s'" % (fs))
+    return "AA"
 
 def relation_class(char):
     if char in inkML.rel_alphabets:
@@ -186,9 +185,8 @@ def relation_class(char):
     if char in inkML.rel_big_ops:
         return 'B'
 
-    print("unknown relation class")
-    import pdb; pdb.set_trace()
-    pass
+    print("!!! WARNING: unknown relation class '%s'" % char)
+    return 'A'
 
 
 def _segment_features(stroke_groups):

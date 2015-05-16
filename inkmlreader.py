@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import os
 import random
 import networkx as nx
+from collections import defaultdict
 
 """
     Usage:
@@ -309,9 +310,19 @@ class inkML(object):
         self.G = nx.MultiGraph()
         pred_rels = []
         for candid, subrels in zip(candids, relations):
+            dict_subrels = dict(subrels)
+            if 'X' in dict_subrels.keys():
+                idx = self.stroke_groups.index(candid[0])
+                idx2 = self.stroke_groups.index(candid[1])
+                if idx2-idx > 1:
+                    print("X probability: " + str(dict_subrels['X']) + ", Idx dist: " + str(idx2-idx))
+                if dict_subrels['X'] > 1:
+                    continue
+
             for rel, w in subrels:
-                # Don't forget to do 1-w (since we're looking for minimum)
-                self.G.add_edge(candid[0], candid[1], weight=(1-w), rel=rel.tolist())
+                if rel != 'X':
+                    # Don't forget to do 1-w (since we're looking for minimum)
+                    self.G.add_edge(candid[0], candid[1], weight=(1-w), rel=rel.tolist())
 
         T = nx.minimum_spanning_tree(self.G)
         self.mst_edges = set(T.edges())  # optimization
@@ -319,14 +330,14 @@ class inkML(object):
 
     def get_relation_candids(self):
         rels = []
-        # TODO:XXX:SIGNIGICANTLY affects recogntion rates
-        k_next = 1
+        # TODO:XXX: k_next SIGNIGICANTLY affects recogntion rates
+        k_next = 2
         for i, grp in enumerate(self.stroke_groups):
             candids = self.stroke_groups[i+1:i+k_next+1]
             rels.extend(list(zip([grp]*k_next, candids, [' ']*k_next)))
         return rels
 
-    def get_relations(self, force_read=False):
+    def get_relations_for_train(self, force_read=False):
         if len(self.relations) > 0 and not force_read:
             return self.relations
 
@@ -340,16 +351,28 @@ class inkML(object):
                                 lg_content.splitlines()))
             rels = []
             outs = []
+            rel_dicts = defaultdict(list)
             for line in rel_lines:
                 # e.g. "R, 1, 2, Sup, 1.0"
                 _, id1, id2, rel, _ = list(map(lambda x: x.strip(), line.split(",")))
                 try:
                     grp1, grp2 = self.grp_from_id(id1), self.grp_from_id(id2)
                     rels.append((grp1, grp2, rel))
+                    rel_dicts[grp1].append(grp2)
                     outs.append(str(grp1) + " " + str(grp2) + " " + rel)
                 except Exception as e:
                     import pdb; pdb.set_trace()
                     pass
+
+            strks = self.stroke_groups
+            for grp in rel_dicts.keys():
+                negative = rel_dicts[grp]
+                idx = self.stroke_groups.index(grp)
+                diff_grps = set(self.stroke_groups[idx+1:]) - set(negative)
+                for rel_grp in diff_grps:
+                    # X is basically our 'reject' relationship
+                    rels.append((grp, rel_grp, 'X'))
+                    outs.append(str(grp) + " " + str(rel_grp) + " X")
 
             print("==============================")
             print(self.fname, new_name)
