@@ -234,12 +234,10 @@ class inkML(object):
         rels = []
 
         for edge in self.mst_edges:
+            # Ensure right-to-left relation. Needed because of networkx's lack of
+            # MST support for directed graphs
+            edge = sorted(edge, key=lambda x: self.stroke_groups.index(x))
             grp1, grp2 = edge[0], edge[1]
-            if self.stroke_groups.index(grp1) > self.stroke_groups.index(grp2):
-                # left-to-right relation. Should neva happen!
-                grp1, grp2 = grp2, grp1
-                print("reversed edge..")
-                pass
             try:
                 rel = self.mst[grp1][grp2]['rel']
             except:
@@ -334,34 +332,36 @@ class inkML(object):
 
         name_parts = self.fname.replace("inkml", "lg").split(".")
         new_name = name_parts[0] + rand_str() + "." + name_parts[1]
-        os.system('crohme2lg "%s" "%s"' % (self.fname, new_name))
+        try:
+            os.system('crohme2lg "%s" "%s"' % (self.fname, new_name))
 
-        lg_content = open(new_name).read()
-        rel_lines = list(filter(lambda x: x.strip().startswith("R,"),
-                            lg_content.splitlines()))
-        rels = []
-        outs = []
-        for line in rel_lines:
-            # e.g. "R, 1, 2, Sup, 1.0"
-            _, id1, id2, rel, _ = list(map(lambda x: x.strip(), line.split(",")))
-            try:
-                grp1, grp2 = self.grp_from_id(id1), self.grp_from_id(id2)
-                rels.append((grp1, grp2, rel))
-                outs.append(str(grp1) + " " + str(grp2) + " " + rel)
-            except Exception as e:
-                import pdb; pdb.set_trace()
-                pass
+            lg_content = open(new_name).read()
+            rel_lines = list(filter(lambda x: x.strip().startswith("R,"),
+                                lg_content.splitlines()))
+            rels = []
+            outs = []
+            for line in rel_lines:
+                # e.g. "R, 1, 2, Sup, 1.0"
+                _, id1, id2, rel, _ = list(map(lambda x: x.strip(), line.split(",")))
+                try:
+                    grp1, grp2 = self.grp_from_id(id1), self.grp_from_id(id2)
+                    rels.append((grp1, grp2, rel))
+                    outs.append(str(grp1) + " " + str(grp2) + " " + rel)
+                except Exception as e:
+                    import pdb; pdb.set_trace()
+                    pass
 
-        print("==============================")
-        print(self.fname, new_name)
-        print("\n".join(rel_lines))
-        print("\n".join(outs))
+            print("==============================")
+            print(self.fname, new_name)
+            print("\n".join(rel_lines))
+            print("\n".join(outs))
 
-        print("==============================\n\n")
+            print("==============================\n\n")
 
-        os.unlink(new_name)
-        # Save for later
-        self.relations = rels
+            # Save for later
+            self.relations = rels
+        finally:
+            os.unlink(new_name)
         return self.relations
 
 
