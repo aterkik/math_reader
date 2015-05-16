@@ -142,7 +142,9 @@ def parse_items(inkmls, params_dir):
             probs = rf.predict_proba(np.array(row,dtype=float))[0]
             res = sorted(zip(classes, probs.tolist()), key=lambda x: x[1])
             res = list(reversed(res))
-            #TODO: make sure this works as intended
+            # Simplify network for highly unlikely classes (prob < thresh)
+            #TODO: make sure this works as intended, also experiment
+            #res = list(filter(lambda x: x[1] >= 0.05, res))
             y_primes = list(res[:3])
             rels.append(y_primes)
         inkml.set_pred_relations(candids, rels)
