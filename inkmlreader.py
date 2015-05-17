@@ -70,7 +70,7 @@ class inkML(object):
     rel_alphabets = rel_alphabets + ['\Delta','\\alpha','\\beta','\cos','\gamma',
                     '\infty', '\lambda', '\log', '\mu', '\phi', '\pi',
                     '\sigma', '\sin', '\sum', '\\tan', '\\theta']
-    rel_ops = list('()+-.=[]') + ['\geq','\gt','\leq','\lt','\\neq', '\prime', ',', '\COMMA', '|', '\ldots', '!', '\pm']
+    rel_ops = list('()+-.=[]') + ['\geq','\gt','\leq','\lt','\\neq', '\prime', ',', '\COMMA', '|', '\ldots', '!', '\pm', '-']
     rel_integrals = ['\int']
     rel_big_ops = ['\sigma', '\sqrt']
 
@@ -240,12 +240,20 @@ class inkML(object):
         for edge in self.mst_edges:
             # Ensure right-to-left relation. Needed because of networkx's lack of
             # MST support for directed graphs
+            # EXCEPT: Above relationships for '-'s
+
+            #TODO:
+            # if edge[0].target == '-' or edge[0].prediction == '-':
+            #     print("Prevented swapping edge nodes for '-' symbol...")
+            # else:
             edge = sorted(edge, key=lambda x: self.stroke_groups.index(x))
+
             grp1, grp2 = edge[0], edge[1]
             try:
                 rel = self.mst[grp1][grp2]['rel']
+                if rel.startswith("A") and '-' in (grp2.prediction, grp2.target):
+                    grp1, grp2 = grp2, grp1
             except:
-                import pdb; pdb.set_trace()
                 pass
 
             grp1.annot_id = grp1.annot_id.replace(",", "COMMA")
@@ -329,6 +337,10 @@ class inkML(object):
                     continue
 
             for rel, w in subrels:
+                if rel.startswith("A"):
+                    if w < 0.4:
+                        # Heuristic, but increases accuracy by a lot in practise
+                        continue
                 if rel != 'X':
                     # Don't forget to do 1-w (since we're looking for minimum)
                     self.G.add_edge(candid[0], candid[1], weight=(1-w), rel=rel.tolist())
@@ -344,6 +356,16 @@ class inkML(object):
         for i, grp in enumerate(self.stroke_groups):
             candids = self.stroke_groups[i+1:i+k_next+1]
             rels.extend(list(zip([grp]*k_next, candids, [' ']*k_next)))
+
+        # Special candidates for 'ABOVE' rule
+        for i, grp in enumerate(self.stroke_groups):
+            if grp.target == '-' or grp.prediction == '-': # TODO: ensure there's no diff b/n '-' and the larger '-' one
+                limit = max(0, i-1)
+                candids = self.stroke_groups[limit:i]
+                total = len(candids)
+                if total > 0:
+                    rels.extend(list(zip([grp]*total, candids, [' ']*total)))
+
         return rels
 
     def get_relations_for_train(self, force_read=False):
