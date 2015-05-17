@@ -65,17 +65,17 @@ class StrokeGroup(object):
             nsize = bbox.height
 
         # Paper specifies vertical coordinate of normalized center
-        #TODO: expierment with both coordinates since it doesn't hurt out method
-        return nsize, bbox.center[1]
+        #TODO: expierment with both coordinates since it doesn't hurt our method
+        return nsize, bbox.center
 
     def get_HD(self, other_strk_grp, target1, target2):
         h1, c1 = self.NSizeCenter(target1)
-        h2, c2 = other_strk_grp.NSizeCenter(target2)
+        h2, c2  = other_strk_grp.NSizeCenter(target2)
 
         H = 1000 * h1/float(h2)
         D = 1000 * (c1-c2)/float(h1)
 
-        return H, D
+        return H, D[0], D[1]
 
     def get_coords(self):
         all_coords = []

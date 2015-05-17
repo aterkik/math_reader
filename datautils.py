@@ -137,7 +137,7 @@ def parser_features(rels):
     indices = {"AA": 0, "AO": 1, "IA": 2, "BA": 3}
     for rel_items in rels:
         grp1, grp2, rel = rel_items
-        H, D = grp1.get_HD(grp2, grp1.target, grp2.target)
+        H, D, D2 = grp1.get_HD(grp2, grp1.target, grp2.target)
 
         # When mixing descrete features with continuous features
         # it's best to use a k-valued binary vector to represnt them
@@ -146,7 +146,7 @@ def parser_features(rels):
         char_class = get_pair_class(grp1.target, grp2.target)
         minuses[indices[char_class]] = 1
 
-        feats.append([H, D] + minuses + [rel])
+        feats.append([H, D, D2] + minuses + [rel])
 
     return np.array(feats)
 
