@@ -357,6 +357,13 @@ class inkML(object):
             candids = self.stroke_groups[i+1:i+k_next+1]
             rels.extend(list(zip([grp]*k_next, candids, [' ']*k_next)))
 
+            if '-' in (grp.target, grp.prediction):
+                # Heuristics, heuristcs everywhere (and they work realllly good)
+                if i+2<len(self.stroke_groups):
+                    rels.append((grp, self.stroke_groups[i+2], ' '))
+                if i-2>=0:
+                    rels.append((self.stroke_groups[i-2], grp, ' '))
+
         # Special candidates for 'ABOVE' rule
         for i, grp in enumerate(self.stroke_groups):
             if grp.target == '-' or grp.prediction == '-': # TODO: ensure there's no diff b/n '-' and the larger '-' one
