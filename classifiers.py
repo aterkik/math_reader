@@ -2,6 +2,7 @@
     Authors: Andamlak Terkik, Kevin Carbone.
 """
 import sys
+import datetime
 import os
 import click
 import numpy as np
@@ -119,12 +120,17 @@ def segment_classify(test_inkmls, train_dir, from_gt):
         for i, pred in enumerate(preds):
             strk_grps[i].prediction = pred
 
-def run_evaluate(inputdir, outputdir):
+def run_evaluate(inputdir, outputdir, log):
     os.system("python batch2lg.py '%s'" % inputdir)
     empty_dir('Results_%s' % outputdir)
 
     os.system("evaluate '%s' '%s'" % (outputdir, inputdir))
     os.system("cat 'Results_%sSummary.txt'" % outputdir)
+
+    cont = open("Results_%sSummary.txt" % outputdir).read()
+    cont = "# LOG: " + log + "\nENDLOG\n" + cont
+    now = str(datetime.datetime.utcnow()).split(".")[0].replace(" ","_")
+    open("Summary_%s.txt" % now, 'w').write(cont)
 
 
 def parse_items(inkmls, params_dir):
@@ -156,8 +162,9 @@ def parse_items(inkmls, params_dir):
 @click.option('--outputdir', default='LG_output/', help='Output directory where .lg files are generated into')
 @click.option('--bonus', is_flag=True, help='Run bonus round')
 @click.option('--from-gt', is_flag=True, help='Read segementation and symbol info from ground truth')
+@click.option('--log', default='', help='Saves a copy of Summary.txt with the attached message appended on top.')
 @click.argument('inputs', nargs=-1)
-def main(inputdir, outputdir, bonus, from_gt, inputs):
+def main(inputdir, outputdir, bonus, from_gt, log, inputs):
     test_inkmls, inputdir = list_files(inputdir, inputs)
     params_dir = PARAMS_DIR if not bonus else BONUS_PARAMS_DIR
 
@@ -166,7 +173,7 @@ def main(inputdir, outputdir, bonus, from_gt, inputs):
     # Now that predictions are embedded in the objects, we can generate
     # label graphs
     generate_lgs(test_inkmls, outputdir)
-    run_evaluate(inputdir, outputdir)
+    run_evaluate(inputdir, outputdir, log)
 
 
 if __name__ == '__main__':

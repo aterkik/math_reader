@@ -38,7 +38,7 @@ class StrokeGroup(object):
             try:
                 all_coords = np.vstack((all_coords, strk.coords.T))
             except Exception as e:
-                print("!!! Warning in bounding box: " + e)
+                print("!!! Warning in bounding box: " + str(e))
                 import pdb; pdb.set_trace()
                 pass
 
