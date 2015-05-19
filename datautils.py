@@ -339,5 +339,8 @@ def segment_inkmls_ground_truth(inkmls):
             inkmls.remove(inkml)
             continue
 
+        for grp in inkml.stroke_groups:
+            grp.prediction = grp.target
+
 
 ########## End utility functions ##############

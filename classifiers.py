@@ -111,9 +111,6 @@ def list_files(inputdir, inputs):
 def segment_classify(test_inkmls, train_dir, from_gt):
     if from_gt:
         segment_inkmls_ground_truth(test_inkmls)
-        for inkml in test_inkmls:
-            for grp in inkml.stroke_groups:
-                grp.prediction = grp.target
     else:
         # Run segmentation
         segment_inkmls(test_inkmls)

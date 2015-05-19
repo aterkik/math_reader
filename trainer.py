@@ -129,6 +129,7 @@ def main():
     if "--split-data" in sys.argv:
         make_train_test_split(src)
         print("Done splitting data.")
+        return
 
     train_inkmls = load_trainset_inkmls()
 
