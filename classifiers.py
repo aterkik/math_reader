@@ -24,14 +24,14 @@ def run_rf(cls, test_data):
 
 def rf_runner(train_dir, test_inkmls):
     print("Generating features for test data...")
-    test_data, strk_grps = inkmls_to_feature_matrix(test_inkmls)
+    test_data, strk_grps = inkmls_to_symbol_feature_matrix(test_inkmls)
     test_X, _ = test_data[:,:-1], test_data[:,-1]
 
     try:
-        rf = joblib.load(train_dir + 'classification-rf.pkl')
+        rf = joblib.load(train_dir + 'symbol-rf.pkl')
     except Exception as e:
         print("!!! Error: couldn't load parameter file for classification")
-        print("!!! Try running './train_classifiers.py' first")
+        print("!!! Try running './trainer.py' first")
         print("!!! Details: '%s'" % e)
         sys.exit(1)
 
@@ -74,7 +74,7 @@ def nnr_runner(train_dir, test_inkmls):
         sys.exit(1)
 
     print("Generating features for test data...")
-    test_data, strk_grps = inkmls_to_feature_matrix(test_inkmls)
+    test_data, strk_grps = inkmls_to_symbol_feature_matrix(test_inkmls)
     test_X, _ = test_data[:,:-1], test_data[:,-1]
     print("Running 1-NN Nearest Neighbor...")
     preds = run_nearest_nbr1(train_data, test_X)
@@ -115,7 +115,9 @@ def segment_classify(test_inkmls, train_dir, from_gt):
             for grp in inkml.stroke_groups:
                 grp.prediction = grp.target
     else:
+        # Run segmentation
         segment_inkmls(test_inkmls)
+        # Run sybol classification
         (preds, strk_grps) = rf_runner(train_dir, test_inkmls)
         for i, pred in enumerate(preds):
             strk_grps[i].prediction = pred

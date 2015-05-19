@@ -19,7 +19,7 @@ class Segmenter(object):
 
     def _load_params(self):
         try:
-            self.cls = joblib.load(PARAMS_DIR + 'segmentation-svc.pkl')
+            self.cls = joblib.load(PARAMS_DIR + 'segmentation-rf.pkl')
             #self.pca = joblib.load(PARAMS_DIR + 'pca.pkl')
             #self.min_max_scaler = joblib.load(PARAMS_DIR + 'segmentation-scaler.pkl')
         except Exception as e:
@@ -31,7 +31,7 @@ class Segmenter(object):
     def baseline_segmenter(self, strokes):
         partition = []
         for i, strk in enumerate(strokes):
-            partition.append(StrokeGroup([strk], 'A_%s' % str(i), ' '))
+            partition.append(StrokeGroup([strk], 'A_%s' % str(i), ' ', str(i)))
         return partition
 
     def main_segmenter(self, strokes):
@@ -41,7 +41,7 @@ class Segmenter(object):
         strokes = sorted(strokes, key=lambda strk: strk.id)
         # Only one stroke, only one partition
         if len(strokes) <= 1:
-            return [StrokeGroup(strokes, 'A_1', ' ')]
+            return [StrokeGroup(strokes, 'A_1', ' ', '1')]
 
 
         #XXX: terrible hack
@@ -71,8 +71,8 @@ class Segmenter(object):
                 groups.append([pairs[i][1]])
 
         partition = []
-        for grp  in groups:
-            partition.append(StrokeGroup(grp, 'A_%s' % str(i), ' '))
+        for i, grp in enumerate(groups):
+            partition.append(StrokeGroup(grp, 'A_%s' % str(i), ' ', str(i)))
 
         #XXX: terrible hack
         for strk in strokes:

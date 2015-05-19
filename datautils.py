@@ -64,6 +64,7 @@ def inkmls_to_symbol_feature_matrix(inkmls):
     if VERBOSE:
         print("Loaded %s symbols (%s files)...\n" % (len(symbols), len(inkmls)))
 
+
     data = np.array([])
     total = len(symbols)
     for i, symbol in enumerate(symbols):
@@ -137,13 +138,13 @@ def parser_features(rels):
     indices = {"AA": 0, "AO": 1, "IA": 2, "BA": 3}
     for rel_items in rels:
         grp1, grp2, rel = rel_items
-        H, D, D2 = grp1.get_HD(grp2, grp1.target, grp2.target)
+        H, D, D2 = grp1.get_HD(grp2, grp1.prediction, grp2.prediction)
 
         # When mixing descrete features with continuous features
         # it's best to use a k-valued binary vector to represnt them
         # see: http://stats.stackexchange.com/a/83086
         minuses = [-1, -1, -1, -1]
-        char_class = get_pair_class(grp1.target, grp2.target)
+        char_class = get_pair_class(grp1.prediction, grp2.prediction)
         minuses[indices[char_class]] = 1
 
         feats.append([H, D, D2] + minuses + [rel])
