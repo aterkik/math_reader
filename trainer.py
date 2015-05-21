@@ -78,7 +78,7 @@ def train_segmenter(train_inkmls, params_dir):
     train_X, train_Y = inkmls_to_segmentation_feature_matrix(train_inkmls)
     train_data = np.column_stack((train_X, train_Y))
     try:
-        seg_cls = RandomForestClassifier(n_estimators=300, max_depth=100)
+        seg_cls = RandomForestClassifier(n_estimators=100, max_depth=50)
         np.save(params_dir + "/segmentation-features.npy", train_data)
 
         print("Fitting segmenter...")
@@ -96,7 +96,7 @@ def train_parser(train_inkmls, params_dir):
     train_X, train_Y = inkmls_to_parser_feature_matrix(train_inkmls)
     train_data = np.column_stack((train_X, train_Y))
     try:
-        seg_cls = RandomForestClassifier(n_estimators=300, max_depth=100)
+        seg_cls = RandomForestClassifier(n_estimators=100, max_depth=50)
         np.save(params_dir + "/parser-features.npy", train_data)
 
         print("Fitting parser...")

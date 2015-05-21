@@ -1,6 +1,6 @@
 ## Handwritten Math Symbol Classification
 
-    python classifiers.py [--inputdir=/path/] [--outputdir=/path/]
+    python classifiers.py [--inputdir=/path/] [--outputdir=/path/] [--from-gt]
 
 ## Options
     --inputdir      input directory containing the .inkml files (note: all files must be in the upper directory since the program doesn't look inside subdirectories recursively, for now.)
@@ -8,11 +8,16 @@
     
     --outputdir     output directory where all the .lg files will be saved (by default creates LG_output in the directory where the program is ran).
 
+    --from-gt       use symbol data from ground truth (version one parser)
+
 
 
 ## Examples
 
-    To run:
+    To run parser using ground truth from inkml:
+        python classifiers.py --inputdir=test_set --outputdir=test_set_lgs --from-gt
+
+    To run parser using raw stroke data:
         python classifiers.py --inputdir=test_set --outputdir=test_set_lgs
 
 
