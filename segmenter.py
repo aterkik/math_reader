@@ -152,7 +152,7 @@ class SegmenterFeatures(object):
         #recognition_features = SegmenterFeatures.recognition_features(strk_pair, strk_grps)
         features = context_features #+ recognition_features
         #features = geo_features + context_features
-        return features + geo_features 
+        return features + geo_features
     
     @staticmethod
     def recognition_features(strk_pair, strks):
@@ -385,8 +385,9 @@ class SegmenterFeatures(object):
         stroke2 = strk_pair[1]
         bb1 = BoundingBox(stroke1)
         bb2 = BoundingBox(stroke2)
-
-        return [parallelity(stroke1,stroke2), average_distance(stroke1,stroke2), \
+        p = parallelity(stroke1,stroke2)
+        # print p
+        return [p[0],p[1], average_distance(stroke1,stroke2), \
                 min_distance(stroke1,stroke2),bb1.distance(bb2), bb1.overlap_distance2(bb2)]
                 # np.fabs((bb1.height * bb1.width) - (bb2.height * bb2.width))]
         # print bb1.overlap(bb2)
@@ -421,8 +422,8 @@ def parallelity(stroke1, stroke2):
         A2,B2 = curve_fit(f, stroke2.coords.T[:,0], stroke2.coords.T[:,1])[0] 
     except:
         ### When one stroke has <= 2 data points, how to handle??
-        return -99999
-    return A2 - A
+        return [-99999,-99999]
+    return [A, A2]
 
 
 def min_distance(stroke1, stroke2):

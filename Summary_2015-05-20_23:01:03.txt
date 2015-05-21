@@ -1,0 +1,60 @@
+# LOG: 
+ENDLOG
+LgEval Evaluation Summary
+Wed May 20 19:01:03 2015
+
+Output File Directory:  LG_output/
+Ground Truth Directory: train_fold/
+
+****  PRIMITIVES   **************************************************************
+
+  Directed   Rate(%)     Total   Correct    Errors    SegErr     ClErr    RelErr
+---------------------------------------------------------------------------------
+     Nodes     13.64       953       130       823
+     Edges     79.93      7588      6065      1523       434       194       895
+
+     Total     72.53      8541      6195      2346
+
+
+Undirected   Rate(%)     Total   Correct    Errors    SegErr     ClErr    RelErr
+---------------------------------------------------------------------------------
+     Nodes     13.64       953       130       823
+Node Pairs     69.06      3794      2620      1174       217        97       860
+
+     Total     57.93      4747      2750      1997
+
+     SegErr: merge/split   ClErr: valid merge class error   RelErr: relation error
+
+
+****  OBJECTS   **************************************************************************
+
+           Recall(%)   Prec(%) 2RP/(R+P)   Targets   Correct  FalseNeg *Detected *FalsePos
+------------------------------------------------------------------------------------------
+   Objects     76.50     64.62     70.06       702       537       165       831       294
+ + Classes     16.52     13.96     15.13       702       116       586       831       715
+ Class/Det     21.60                           537       116
+
+ Relations     32.02     25.76     28.55       531       170       361       660       490
+ + Classes     13.37     10.76     11.92       531        71       460       660       589
+ Class/Det     41.76                           170        71
+
+     2RP/(R+P): harmonic mean (f-measure) for (R)ecall and (P)recision
+     Class/Det: (correct detection and classification) / correct detection
+
+
+****  FILES  ***************************************
+
+             Rate(%)     Total   Correct    Errors
+---------------------------------------------------
+   Objects     43.86       171        75        96
+ + Classes      1.75       171         3       168
+ Class/Det      4.00        75         3          
+
+ Relations     35.09       171        60       111
+ + Classes     21.05       171        36       135
+ Class/Det     60.00        60        36          
+
+ Structure     35.09       171        60       111
+ + Classes      1.17       171         2       169    *Final
+ Class/Det      3.33        60         2          
+

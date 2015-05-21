@@ -9,6 +9,7 @@ from settings import *
 import operator
 import random
 from segmenter import SegmenterFeatures
+import traceback
 
 ######## Utility functions ################
 
@@ -89,6 +90,7 @@ def inkmls_to_segmentation_feature_matrix(inkmls):
     for i, inkml in enumerate(inkmls):
         if len(inkml.stroke_groups) <= 0:
             continue
+
         features, new_ys = _segment_features(inkml.stroke_groups)
 
         if Xs.shape[0] == 0:
@@ -319,7 +321,9 @@ def segment_inkmls(inkmls):
             inkml.segment_preprocess()
             inkml.parse(from_ground_truth=False)
             inkml.symbol_preprocess()
-        except:
+        except Exception as e:
+            print e
+            print traceback.format_exc()
             inkmls.remove(inkml)
             continue
 

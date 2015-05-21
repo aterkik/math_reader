@@ -119,21 +119,96 @@ class inkML(object):
 
 
     def segment_preprocess(self):
+        # for strk in self._strokes:
+        #     import matplotlib.pyplot as plt
+        #     plt.plot(strk.coords[:,0],strk.coords[:,1])
+        #     plt.show()
+        # self.plot_expression()
+
+        # self.plot_expression()
+
         for strk in self._strokes:
             strk.clean()
-        coords_before = self._strokes[0].coords
-        self.resample()
+        # self.plot_expression()
         self.expr_size_scaling2()
 
+        coords_before = self._strokes[0].coords
+        # self.resample4()
+        # self.plot_expression()
 
-    def resample(self,alpha=13):
+        self.resample()
+        self.resample4()
+        self.center()
+        # self.plot_expression()
+
+
+        # self.plot_expression()
+
+        # print "POST"
+        # for strk in self._strokes:
+        #     import matplotlib.pyplot as plt
+        #     plt.plot(strk.coords[:,0],strk.coords[:,1])
+        #     plt.show()
+
+    # def uniform(self):
+
+
+
+    def resample2(self,step=5):
+        for i,stroke in enumerate(self._strokes):
+            coords = stroke.coords
+            new_coords = []
+
+            for j,coord in enumerate(stroke.coords):
+                if j%step == 0:
+                    new_coords.append(coord)
+            self._strokes[i].coords = np.array(new_coords)
+
+    def resample4(self,k=64):
+        for ctr,stroke in enumerate(self._strokes):
+            k = 64
+            coords = stroke.coords
+            if len(coords) <= k:
+                return
+            else:
+                r = len(coords) / k
+                ncoords = []
+                for i in range(0,len(coords),r):
+                    ncoords.append(coords[i])
+                if len(coords) > k:
+                    k /= 2
+                    # print k
+                    r = len(coords) / k
+                    ncoords = []
+                    for i in range(0,len(coords),r):
+                        ncoords.append(coords[i])
+                    # print len(ncoords)
+            # print len(ncoords)
+            self._strokes[ctr].coords = np.array(ncoords)
+
+    def center(self):
+        l1,l2 = self.expression_coords()[:,0].min(),self.expression_coords()[:,1].min()
+        for ctr,stroke in enumerate(self._strokes):
+            self._strokes[ctr].coords[:,0] -= l1
+            self._strokes[ctr].coords[:,1] -= l2
+
+    def resample(self,alpha=15):
         # all_coords = []
         # other_coords = []
         for ctr,stroke in enumerate(self._strokes):
-            coords = stroke.coords
+            coords = np.copy(stroke.coords)
+            xmin = coords[:,0].min()
+            xmax = coords[:,0].max()
+            ymin = coords[:,1].min()
+            ymax = coords[:,1].max()
+            wh_ratio = (xmax-xmin)/(ymax-ymin) if (ymax-ymin) != 0 else xmax-xmin
+            stroke.scale_size(xmin, ymin, xmax-xmin,
+                    ymax-ymin, wh_ratio, yhigh=200)
+            sc_coords = stroke.coords.T
+
             L = [0]
             for i in range(1,len(coords)):
-                L.append(L[i-1] + np.linalg.norm(coords[i] - coords[i-1]))
+                L.append(L[-1] + np.linalg.norm(sc_coords[i] - sc_coords[i-1]))
             m = int(np.floor(L[-1]/alpha))
             n = len(coords) - 1
             p1 = coords[0]
@@ -142,11 +217,16 @@ class inkML(object):
             for p in range(1,m-1):
                 while L[j] < p * alpha:
                     j += 1
-                C = (p*alpha-L[j-1])/(L[j] - L[j-1])
+                C = (p*alpha-L[j-1])/(L[j] - L[j-1]) 
                 nx = (coords[j-1][0] + (coords[j][0] - coords[j-1][0]) * C) 
                 ny = (coords[j-1][1] + (coords[j][1] - coords[j-1][1]) * C)
                 ncoords.append([nx,ny])
             ncoords.append([coords[-1][0],coords[-1][1]])
+            self._strokes[ctr].coords = np.array(ncoords)
+            # print "PLOT"
+            # import matplotlib.pyplot as plt
+            # plt.scatter(np.array(ncoords)[:,0],np.array(ncoords)[:,1])
+            # plt.show()
             self._strokes[ctr].coords = np.array(ncoords)
             
             # all_coords.extend(ncoords)
@@ -161,19 +241,95 @@ class inkML(object):
         # time.sleep(5)
 
 
+    # def old_resample(self,alpha=2):
+    #     # all_coords = []
+    #     # other_coords = []
+    #     for ctr,stroke in enumerate(self._strokes):
+    #         coords = np.copy(stroke.coords)
+    #         xmin = coords[:,0].min()
+    #         xmax = coords[:,0].max()
+    #         ymin = coords[:,1].min()
+    #         ymax = coords[:,1].max()
+    #         wh_ratio = (xmax-xmin)/(ymax-ymin) if (ymax-ymin) != 0 else xmax-xmin
+    #         stroke.scale_size(xmin, ymin, xmax-xmin,
+    #                 ymax-ymin, wh_ratio, yhigh=100)
+    #         sc_coords = stroke.coords.T
+    #         import matplotlib.pyplot as plt
+    #         plt.scatter(sc_coords[:,0],sc_coords[:,1])
+    #         plt.show()
+    #         # print len(coords)
+    #         # print coords,sc_coords
+    #         # print len(coords)
+    #         # if len(coords) > alpha:
 
+    #         # L = [0]
+    #         # for i in range(1,len(coords)):
+    #         #     L.append(L[-1] + np.linalg.norm(coords[i] - coords[i-1]))
+    #         # alpha = L[-1] * 0.05
+    #         # m = int(np.floor(L[-1]/alpha))
+    #         n = len(coords) - 1
+    #         p1 = coords[0]
+    #         ncoords = [p1]
+    #         j = 1
+    #         for i in range(n):
+    #             dist = np.linalg.norm(sc_coords[j] - sc_coords[i])
+    #             if dist >= alpha:
+    #                 ncoords.append(coords[j])
+    #                 i = j
+    #                 count += 1
+    #             j += 1
+    #             # while L[j] < p * alpha:
+    #             #     j += 1
+    #             # C = (p*alpha-L[j-1])/(L[j] - L[j-1])
+    #             # nx = (coords[j-1][0] + (coords[j][0] - coords[j-1][0]) * C) 
+    #             # ny = (coords[j-1][1] + (coords[j][1] - coords[j-1][1]) * C)
+    #             # ncoords.append([nx,ny])
+    #         # ncoords.append([coords[-1][0],coords[-1][1]])
+    #         import matplotlib.pyplot as plt
+    #         plt.scatter(np.array(ncoords)[:,0],np.array(ncoords)[:,1])
+    #         plt.show()
+    #         self._strokes[ctr].coords = np.array(ncoords)
+            
+    #         # all_coords.extend(ncoords)
+    #         # other_coords.extend(coords)
+    #     # cs = np.array(all_coords)
+    #     # cs2 = np.array(other_coords)
+    #     # plt.scatter(cs[:,0],cs[:,1])
+    #     # plt.figure()
+    #     # plt.scatter(cs2[:,0],cs2[:,1])
+    #     # plt.show()
+    #     # import time
+    #     # time.sleep(5)
 
     def expr_size_scaling2(self):
         xh,yh = (self._xmax_expr - self._xmin_expr),(self._ymax_expr - self._ymin_expr)
+        xmin = self._xmin_expr
+        ymin = self._ymin_expr
         for ctr,strk in enumerate(self._strokes):
+            # print strk.coords[:,1].max() - strk.coords[:,1].min()
+            # xmin = strk.coords[:,0].min()
+            # ymin = strk.coords[:,1].min()
+            # xh,yh = strk.coords[:,0].max() - strk.coords[:,0].min(),strk.coords[:,1].max() - strk.coords[:,1].min() 
             new_coords = []
             for coord in strk.coords:
-                ncoordx = ((coord[0] - self._xmin_expr) / max(xh,yh)) * 200
-                ncoordy = ((coord[1] - self._ymin_expr) / max(xh,yh)) * 200
+
+                ncoordx = ((coord[0] - xmin) / xh) 
+                ncoordy = ((coord[1] - ymin) / xh) 
                 new_coords.append([ncoordx,ncoordy])
 
 
             self._strokes[ctr].coords = np.array(new_coords)
+
+    def plot_expression(self):
+        import matplotlib.pyplot as plt
+        plt.scatter(self.expression_coords()[:,0],self.expression_coords()[:,1])
+        plt.show()
+
+    def expression_coords(self):
+        all_coords = []
+        for ctr,strk in enumerate(self._strokes):
+            all_coords.extend(self._strokes[ctr].coords)
+        return np.array(all_coords)
 
 
     def expr_size_scaling(self):
@@ -253,8 +409,8 @@ class inkML(object):
                 rel = self.mst[grp1][grp2]['rel']
                 if rel.startswith("A") and '-' in (grp2.prediction, grp2.target):
                     grp1, grp2 = grp2, grp1
-            except:
-                pass
+            except Exception as e:
+                print e
 
             grp1.annot_id = grp1.annot_id.replace(",", "COMMA")
             grp2.annot_id = grp2.annot_id.replace(",", "COMMA")
@@ -266,8 +422,8 @@ class inkML(object):
         inbetween = "\n\n# [ RELATIONSHIPS ]\n"
         return out + inbetween + rels
 
-    @staticmethod
-    def _parse_inkml_unsegmented(inkml_data, fname, segmenter_kind='baseline'):
+    
+    def _parse_inkml_unsegmented(self, inkml_data, fname, segmenter_kind='baseline'):
         root = ET.fromstring(inkml_data)
         np = root.tag.rstrip('ink') # get namespace, bad hack!
 
@@ -278,9 +434,9 @@ class inkML(object):
             strokes.append(stroke)
 
         if segmenter_kind == 'baseline':
-            partition = inkML.segmenter.baseline_segmenter(strokes)
+            partition = inkML.segmenter.baseline_segmenter(self._strokes)
         else:
-            partition = inkML.segmenter.main_segmenter(strokes)
+            partition = inkML.segmenter.main_segmenter(self._strokes)
 
         return (root, partition)
 

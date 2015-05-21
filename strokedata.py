@@ -71,8 +71,13 @@ class StrokeGroup(object):
     def get_HD(self, other_strk_grp, target1, target2):
         h1, c1 = self.NSizeCenter(target1)
         h2, c2  = other_strk_grp.NSizeCenter(target2)
-
+        if int(h2) == 0:
+            h2 = 0.0001
+        
         H = 1000 * h1/float(h2)
+        if int(h1) == 0:
+            h1 = 0.0001
+        
         D = 1000 * (c1-c2)/float(h1)
 
         return H, D[0], D[1]
@@ -99,6 +104,7 @@ class StrokeGroup(object):
         for strk in self.strokes:
             strk.scale_size(self.xmin, self.ymin, self.xmax-self.xmin,
                     self.ymax-self.ymin, wh_ratio, yhigh=100)
+        coords = self.get_coords()
 
         # Recalculate min & maxes after scaling
         [self.xmin, self.ymin] = np.min([stroke.coords.T.min(axis=0)
@@ -382,16 +388,37 @@ class Stroke(object):
         # Do coordinate smoothing
         # Works by replacing every point by the average of the previous,
         # current and next point (except for the first and last point)
-        last_idx = len(uniques) - 1
-        for i, pair in enumerate(uniques):
-            if i in (0, last_idx,):
-                continue
-            uniques[i][0] = (uniques[i-1][0]+uniques[i][0]+uniques[i+1][0]) / 3.0
-            uniques[i][1] = (uniques[i-1][1]+uniques[i][1]+uniques[i+1][1]) / 3.0
+        # print "uniques",uniques
+        # last_idx = len(uniques) - 1
+        # for i, pair in enumerate(uniques):
+        #     if i in (0, last_idx,):
+        #         continue
+        #     uniques[i][0] = (uniques[i-1][0]+uniques[i][0]+uniques[i+1][0]) / 3.0
+        #     uniques[i][1] = (uniques[i-1][1]+uniques[i][1]+uniques[i+1][1]) / 3.0
 
 
-       
-        self.coords = np.array(uniques)
+        # import matplotlib.pyplot as plt
+        # plt.plot(self.coords[:,0],self.coords[:,1])
+        # plt.show()
+        # self.coords = np.array(uniques)
+        uniques = np.array(uniques)
+
+        newps = np.copy(uniques)
+        k = 1
+        if len(uniques) > k*2:
+            for i in range(k,len(uniques)-k):
+                # if i in (k, last_idx,):
+                sumx = 0
+                sumy = 0
+                for j in range(-k,k+1):
+                    sumx += uniques[i+j][0]
+                    sumy += uniques[i+j][1]
+                newps[i-k][0] = sumx / ((k*2.0) + 1.0)
+                newps[i-k][1] = sumy / ((k*2.0) + 1.0)
+            # print uniques
+            newps = newps[:-k]
+        self.coords = np.array(newps)
+
         self.is_clean = True
 
     def plot(self):
