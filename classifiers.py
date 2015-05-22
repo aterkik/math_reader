@@ -9,7 +9,7 @@ import numpy as np
 from sklearn.externals import joblib
 from sklearn import preprocessing
 from datautils import *
-from train_classifiers import load_testset_inkmls, load_trainset_inkmls
+from trainer import load_testset_inkmls, load_trainset_inkmls
 from utils import create_dir, empty_dir
 from settings import *
 
