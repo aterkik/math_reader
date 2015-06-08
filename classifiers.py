@@ -41,47 +41,6 @@ def rf_runner(train_dir, test_inkmls):
 
     return (preds, strk_grps)
 
-######## 1-NN Nearest Neighbor classifier #####
-def euclid_dist(x,y):
-    """Euclidean distance"""
-    return np.sqrt(np.sum((x-y)**2))
-
-def nearest_nbr1(x, data):
-    """Returns predicted nearest neighbor output"""
-    x = x.astype(np.float)
-    data_X, data_y = data[:,:-1].astype(np.float), data[:,-1]
-    dist = np.sqrt(np.sum((data_X-x)**2, axis=1))
-    closest_nbr = np.argsort(dist)[0]
-
-    return data_y[closest_nbr]
-
-def run_nearest_nbr1(train_data, test_data):
-    shape = test_data.shape
-    results = []
-
-    for idx, row in enumerate(test_data):
-        y_prime = nearest_nbr1(row, train_data)
-        results.append(y_prime)
-
-    return np.array(results)
-
-def nnr_runner(train_dir, test_inkmls):
-    try:
-        train_data = np.load(train_dir + '1nnr.npy')
-    except:
-        print("!!! Error: couldn't load parameter file for symbol classification")
-        print("!!! Try running './train_classifiers.py' first")
-        sys.exit(1)
-
-    print("Generating features for test data...")
-    test_data, strk_grps = inkmls_to_symbol_feature_matrix(test_inkmls)
-    test_X, _ = test_data[:,:-1], test_data[:,-1]
-    print("Running 1-NN Nearest Neighbor...")
-    preds = run_nearest_nbr1(train_data, test_X)
-    return (preds, strk_grps)
-
-###### End Nearest Neighbor ###########
-
 
 def generate_lgs(inkmls, path):
     create_dir(path)
@@ -159,13 +118,12 @@ def parse_items(inkmls, params_dir):
 @click.command()
 @click.option('--inputdir', default='', help='Input directory containing .inkml files')
 @click.option('--outputdir', default='LG_output/', help='Output directory where .lg files are generated into')
-@click.option('--bonus', is_flag=True, help='Run bonus round')
 @click.option('--from-gt', is_flag=True, help='Read segementation and symbol info from ground truth')
 @click.option('--log', default='', help='Saves a copy of Summary.txt with the attached message appended on top.')
 @click.argument('inputs', nargs=-1)
-def main(inputdir, outputdir, bonus, from_gt, log, inputs):
+def main(inputdir, outputdir, from_gt, log, inputs):
     test_inkmls, inputdir = list_files(inputdir, inputs)
-    params_dir = PARAMS_DIR if not bonus else BONUS_PARAMS_DIR
+    params_dir = PARAMS_DIR
 
     segment_classify(test_inkmls, params_dir, from_gt)
     parse_items(test_inkmls, params_dir)

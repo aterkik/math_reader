@@ -1,7 +1,6 @@
 
 
 PARAMS_DIR = 'params/'
-BONUS_PARAMS_DIR = 'bonus_params/'
 
 TEST_FRACTION = 1.0/3.0
 
