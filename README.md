@@ -1,36 +1,18 @@
-## Handwritten Math Symbol Classification
+## Handwritten Math Expression Recognizer
 
-    python classifiers.py [--inputdir=/path/] [--outputdir=/path/] [--from-gt]
-
-## Options
-    --inputdir      input directory containing the .inkml files (note: all files must be in the upper directory since the program doesn't look inside subdirectories recursively, for now.)
-
+Based on scikit-learn and dataset/tooling from CROHME competition (http://www.isical.ac.in/~crohme/).
     
-    --outputdir     output directory where all the .lg files will be saved (by default creates LG_output in the directory where the program is ran).
+    A composition of three sub-systems: symbol classifier, segmenter and expression parser.
 
-    --from-gt       use symbol data from ground truth (version one parser)
+    The implementations are largely based on:
 
+    - For the classifier: *Using Off-line Features and Synthetic Data for On-line Handwritten Math Symbol Recognition* by Davila, Luddi, Zanibbi (https://www.cs.rit.edu/~rlaz/files/Davila_ICFHR2014.pdf).
 
+    - For the segmenter: *Segmenting Handwritten Math Symbols Using AdaBoost and Multi-Scale Shape Context Features* by Hu and Zanibbi (http://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=6628800).
 
-## Examples
+    - For the parser: *Mathematical formula recognition using virtual link network* by Eto and Suzuki
+    (http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=953891).
 
-    To run parser using ground truth from inkml:
-        python classifiers.py --inputdir=test_set --outputdir=test_set_lgs --from-gt
-
-    To run parser using raw stroke data:
-        python classifiers.py --inputdir=test_set --outputdir=test_set_lgs
-
-
-## Training classifiers
-    Training:
-        1) Train both classifiers, using 2/3 for training and 1/3 for testing set
-            python train_classifiers.py <training_dir>
-            
-## Installation
-After installing Python 3, run:
-
-        pip install -r requirements.txt
-
-Authors: Andamlak Terkik, Kevin Carbone
-
-
+    However, especially for the segmenter and parser, the implementation does deviate on some important aspects.
+        
+    More instruction on how to run it coming soon.
